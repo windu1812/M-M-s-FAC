@@ -1,8 +1,43 @@
-# Secrets
+# Secrets and local settings: never commit
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+.claude/settings.local.json
+CLAUDE.local.md
+.streamlit/secrets.toml
+
+# Local data
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+media/
+
+# Check output (screenshots, browser logs)
+.browser-checks/
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# Python
 __pycache__/
 *.pyc
 .venv/
 venv/
-.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# JavaScript
+node_modules/
+.next/
+dist/
+build/
+
+# Editors and OS
 .DS_Store
+Thumbs.db
+.idea/
+cache/
