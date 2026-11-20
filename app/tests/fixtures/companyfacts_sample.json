@@ -1,0 +1,171 @@
+{
+  "_comment": "SYNTHETIC test data in the SEC companyfacts format. Fictional company, round numbers. Each fact is built to trigger one pitfall: fy vs end, comparatives, restatement, quarterly and 3-year periods, 10-Q filings, tag change, missing items. See tests/test_financials.py.",
+  "cik": 1234567,
+  "entityName": "SAMPLE TEST CORP",
+  "facts": {
+    "dei": {
+      "EntityCommonStockSharesOutstanding": {
+        "label": "Entity Common Stock, Shares Outstanding",
+        "units": {
+          "shares": [
+            {"end": "2024-01-31", "val": 1000000, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      }
+    },
+    "us-gaap": {
+      "SalesRevenueNet": {
+        "label": "Revenues, Net (old tag)",
+        "units": {
+          "USD": [
+            {"start": "2017-01-01", "end": "2017-12-31", "val": 800, "accn": "0001234567-19-000010", "fy": 2018, "fp": "FY", "form": "10-K", "filed": "2019-02-15"},
+            {"start": "2018-01-01", "end": "2018-12-31", "val": 900, "accn": "0001234567-19-000010", "fy": 2018, "fp": "FY", "form": "10-K", "filed": "2019-02-15"},
+            {"start": "2018-01-01", "end": "2018-12-31", "val": 900, "accn": "0001234567-20-000010", "fy": 2019, "fp": "FY", "form": "10-K", "filed": "2020-02-14"},
+            {"start": "2019-01-01", "end": "2019-12-31", "val": 1000, "accn": "0001234567-20-000010", "fy": 2019, "fp": "FY", "form": "10-K", "filed": "2020-02-14"},
+            {"start": "2019-01-01", "end": "2019-12-31", "val": 1000, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"},
+            {"start": "2020-01-01", "end": "2020-12-31", "val": 1100, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"}
+          ]
+        }
+      },
+      "RevenueFromContractWithCustomerExcludingAssessedTax": {
+        "label": "Revenue from Contract with Customer (new tag)",
+        "units": {
+          "USD": [
+            {"start": "2020-01-01", "end": "2020-12-31", "val": 1100, "accn": "0001234567-22-000010", "fy": 2021, "fp": "FY", "form": "10-K", "filed": "2022-02-15"},
+            {"start": "2021-01-01", "end": "2021-12-31", "val": 1150, "accn": "0001234567-22-000010", "fy": 2021, "fp": "FY", "form": "10-K", "filed": "2022-02-15"},
+            {"start": "2021-01-01", "end": "2021-12-31", "val": 1150, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 1200, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2023-01-01", "end": "2023-09-30", "val": 1020, "accn": "0001234567-23-000030", "fy": 2023, "fp": "Q3", "form": "10-Q", "filed": "2023-11-03"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 1250, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 1400, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 360, "accn": "0001234567-24-000020", "fy": 2024, "fp": "Q1", "form": "10-Q", "filed": "2024-05-10"}
+          ]
+        }
+      },
+      "Revenues": {
+        "label": "Revenues (highest priority tag)",
+        "units": {
+          "USD": [
+            {"start": "2021-01-01", "end": "2023-12-31", "val": 3850, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"start": "2023-10-01", "end": "2023-12-31", "val": 380, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 1400, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "InterestExpense": {
+        "label": "Interest Expense (not reported in the FY2023 10-K)",
+        "units": {
+          "USD": [
+            {"start": "2019-01-01", "end": "2019-12-31", "val": 30, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"},
+            {"start": "2020-01-01", "end": "2020-12-31", "val": 32, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"},
+            {"start": "2020-01-01", "end": "2020-12-31", "val": 32, "accn": "0001234567-22-000010", "fy": 2021, "fp": "FY", "form": "10-K", "filed": "2022-02-15"},
+            {"start": "2021-01-01", "end": "2021-12-31", "val": 35, "accn": "0001234567-22-000010", "fy": 2021, "fp": "FY", "form": "10-K", "filed": "2022-02-15"},
+            {"start": "2021-01-01", "end": "2021-12-31", "val": 35, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 40, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"}
+          ]
+        }
+      },
+      "Assets": {
+        "label": "Assets",
+        "units": {
+          "USD": [
+            {"end": "2018-12-31", "val": 4000, "accn": "0001234567-20-000010", "fy": 2019, "fp": "FY", "form": "10-K", "filed": "2020-02-14"},
+            {"end": "2019-12-31", "val": 4200, "accn": "0001234567-20-000010", "fy": 2019, "fp": "FY", "form": "10-K", "filed": "2020-02-14"},
+            {"end": "2019-12-31", "val": 4200, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"},
+            {"end": "2020-12-31", "val": 4500, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"},
+            {"end": "2020-12-31", "val": 4500, "accn": "0001234567-22-000010", "fy": 2021, "fp": "FY", "form": "10-K", "filed": "2022-02-15"},
+            {"end": "2021-12-31", "val": 4800, "accn": "0001234567-22-000010", "fy": 2021, "fp": "FY", "form": "10-K", "filed": "2022-02-15"},
+            {"end": "2021-12-31", "val": 4800, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"end": "2022-12-31", "val": 5000, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"end": "2023-09-30", "val": 5500, "accn": "0001234567-23-000030", "fy": 2023, "fp": "Q3", "form": "10-Q", "filed": "2023-11-03"},
+            {"end": "2022-12-31", "val": 5100, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 5600, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 5650, "accn": "0001234567-24-000020", "fy": 2024, "fp": "Q1", "form": "10-Q", "filed": "2024-05-10"},
+            {"end": "2024-03-31", "val": 5700, "accn": "0001234567-24-000020", "fy": 2024, "fp": "Q1", "form": "10-Q", "filed": "2024-05-10"}
+          ]
+        }
+      },
+      "NetIncomeLoss": {
+        "label": "Net income attributable to the parent",
+        "units": {
+          "USD": [
+            {"start": "2021-01-01", "end": "2021-12-31", "val": 100, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 120, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 120, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 150, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "ProfitLoss": {
+        "label": "Profit including noncontrolling interest (must NOT be used as net income)",
+        "units": {
+          "USD": [
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 155, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "LongTermDebtNoncurrent": {
+        "label": "Long-term debt, noncurrent",
+        "units": {
+          "USD": [
+            {"end": "2021-12-31", "val": 1900, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"end": "2022-12-31", "val": 1950, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"end": "2022-12-31", "val": 1950, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 2000, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "LongTermDebtAndCapitalLeaseObligations": {
+        "label": "Long-term debt INCLUDING finance leases (must NOT be used: leases would be counted twice)",
+        "units": {
+          "USD": [
+            {"end": "2020-12-31", "val": 1800, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"}
+          ]
+        }
+      },
+      "LongTermDebtCurrent": {
+        "label": "Current portion of long-term debt",
+        "units": {
+          "USD": [
+            {"end": "2022-12-31", "val": 250, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 300, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "ShortTermBorrowings": {
+        "label": "Short-term borrowings, total (includes commercial paper)",
+        "units": {
+          "USD": [
+            {"end": "2023-12-31", "val": 200, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "CommercialPaper": {
+        "label": "Commercial paper (part of short-term borrowings)",
+        "units": {
+          "USD": [
+            {"end": "2022-12-31", "val": 80, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 150, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "OperatingLeaseLiability": {
+        "label": "Operating lease liabilities, total",
+        "units": {
+          "USD": [
+            {"end": "2022-12-31", "val": 380, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 400, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "FinanceLeaseLiability": {
+        "label": "Finance lease liabilities, total (not reported for 2022)",
+        "units": {
+          "USD": [
+            {"end": "2023-12-31", "val": 100, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      }
+    }
+  }
+}

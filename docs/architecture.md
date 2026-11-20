@@ -39,7 +39,7 @@ Status: agreed on 2026-11-20 (Arthur, for the team)
 
 | Function | Returns (pandas DataFrame, one row per ...) | Columns |
 |---|---|---|
-| `data.financials.get_financials(ticker)` | fiscal year × item | `company, ticker, fiscal_year, period_end, item, value` (USD)`, unit, xbrl_tag, form, filed, accession, status` (`ok` / `not available`) |
+| `data.financials.get_financials(ticker)` | fiscal year × item (`revenue, operating_income, net_income, depreciation_amortization, interest_expense, total_assets, total_liabilities, stockholders_equity, current_assets, current_liabilities, cash, long_term_debt, long_term_debt_current, short_term_borrowings, operating_lease_liabilities, finance_lease_liabilities, operating_cash_flow, capex`) | `company, ticker, fiscal_year, period_end, item, value` (USD)`, unit, xbrl_tag, form, filed, accession, status` (`ok` / `not available`) |
 | `ratios.compute_ratios(financials)` | fiscal year × metric (the 4 debt-based metrics exist twice: `total_debt`, `net_debt`, `net_debt_to_ebitda`, `debt_to_equity`, plus the same names ending in `_incl_leases`) | `ticker, fiscal_year, period_end, metric, value, unit` (`USD m`, `x`, `%`)`, status` (`ok` / `not available` / `not meaningful`)`, reason` |
 | `flags.apply_flags(ratios, thresholds)` | same rows as `compute_ratios` | the columns above plus `flag` (`green` / `orange` / `red` / empty when there is no value) |
 | `flags.overall_alert(flagged, ticker)` | one alert | `level` (`green` / `orange` / `red`), `text` (for example "Red: 2 red flags, 1 not available") |
@@ -57,7 +57,7 @@ No database.
 
 | Service | Used for | Setting names (values in `app/.env`, never committed) | Free tier / cost | Terms checked |
 |---|---|---|---|---|
-| SEC EDGAR (`www.sec.gov`, `data.sec.gov`) | Ticker list, XBRL companyfacts | `SEC_USER_AGENT` (name and email of a team member) | Free | `[to confirm in slice 2]` |
+| SEC EDGAR (`www.sec.gov`, `data.sec.gov`) | Ticker list, XBRL companyfacts | `SEC_USER_AGENT` (name and email of a team member) | Free | Checked by Arthur on 2026-11-20 (User-Agent required, max 10 requests/s) |
 
 No paid service is used (decision of 2026-11-20).
 
@@ -94,4 +94,5 @@ No paid service is used (decision of 2026-11-20).
 | 2026-11-20 | No paid service: the optional LLM credit comment is dropped | The team must not pay anything | Arthur |
 | 2026-11-20 | ~~Total debt always includes short-term borrowings and leases~~ (replaced by the next line) | – | Arthur |
 | 2026-11-20 | Total debt in two versions: "financial debt only" (default) and "including leases and short-term borrowings". A dashboard selector switches the debt-based numbers; the Excel file holds both. The data for both is extracted in slice 2 | Lets the analyst see reported debt and lease-adjusted leverage side by side | Arthur |
+| 2026-11-20 | Debt tags that already include leases (`LongTermDebtAndCapitalLeaseObligations`, `DebtCurrent`) are never used; for short-term borrowings the `ShortTermBorrowings` total comes before `CommercialPaper` | Avoids counting finance leases or commercial paper twice in the "including leases" total | Arthur (proposed by Claude in slice 2) |
 | 2026-11-20 | Scope and architecture agreed (product, visuals, MVP, stack, acceptance criteria, plan) | Answers to the 5 open questions | Arthur |
