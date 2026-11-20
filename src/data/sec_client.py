@@ -71,17 +71,18 @@ class RateLimiter:
 _rate_limiter = RateLimiter(MIN_SECONDS_BETWEEN_REQUESTS)
 
 
-def get_user_agent(env_file: Path = ENV_FILE) -> str:
+def get_user_agent(env_file: Path | None = None) -> str:
     """Return the SEC User-Agent read from the ``SEC_USER_AGENT`` setting.
 
-    The value is loaded from ``.env`` with python-dotenv (an environment
-    variable that is already set wins). The SEC requires a name and an email,
-    for example ``"First Last first.last@example.com"``.
+    The value is loaded from ``env_file`` (default: ``.env`` at the project
+    root) with python-dotenv; an environment variable that is already set
+    wins. The SEC requires a name and an email, for example
+    ``"First Last first.last@example.com"``.
 
     Raises:
         SecConfigError: if the setting is missing or empty.
     """
-    load_dotenv(env_file)
+    load_dotenv(env_file or ENV_FILE)
     user_agent = os.getenv("SEC_USER_AGENT", "").strip()
     if not user_agent:
         raise SecConfigError(
