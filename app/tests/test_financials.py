@@ -12,6 +12,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 import pytest
+import requests
 
 from creditlens.data import financials as fin
 from creditlens.data import sec_client
@@ -247,6 +248,18 @@ def test_get_financials_end_to_end_from_cache(fixtures_dir):
     assert len(df) == 5 * len(ITEMS)
     assert row_for(df, "revenue", 2023)["value"] == 1400
     assert row_for(df, "total_assets", 2023)["value"] == 5600
+
+
+def test_get_financials_sec_unreachable_without_cache_raises_clear_error(monkeypatch):
+    # Acceptance E8: no internet and an empty cache. The page catches this error
+    # for the ticker and shows its message (slice 5).
+    def failing_get(url, headers, timeout):
+        raise requests.ConnectionError("no route to host")
+
+    monkeypatch.setattr(sec_client.requests, "get", failing_get)
+
+    with pytest.raises(sec_client.SecUnavailableError, match="Could not get data from the SEC"):
+        fin.get_financials("AAPL")
 
 
 # --- Items added in slice 2 (net income, debt parts, leases) -----------------
