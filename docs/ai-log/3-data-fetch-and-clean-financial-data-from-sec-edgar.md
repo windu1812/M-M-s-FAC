@@ -94,3 +94,6 @@ Items reported as "not available" by the companies' own XBRL data. These are not
 - The first 10-K parser found no MSFT income statement. Microsoft's HTML splits the title ("INC OME STATEMENTS")
   and puts each cell on its own line. The AI found the page through the 10-K's own index (page 50) and read the
   rows from there.
+- The AI first reported "75 passed". Two of those tests were duplicates: pytest also collected the iCloud copy
+  `app/tests/test_app 2.py`. The AI caught it when the count dropped to 73 after the copies were moved out, counted
+  the tests per file (2 + 35 + 18 + 18 = 73) and corrected `docs/plan.md`.

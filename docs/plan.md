@@ -35,7 +35,7 @@ Status values: `todo`, `in progress`, `done (<date>, commit <short hash>)`, `blo
 |---|---|---|---|---|
 | 2026-11-20 | 2 | PR #4: SEC client, XBRL extraction (13 items), 47 offline tests | pytest: 47 passed; real run on AAPL, MSFT and NKE | Built in `src/` before the starter: must move to `app/` |
 | 2026-11-20 | 1 | Product documents agreed; issues #6–#9 created; walking skeleton in `app/` (Streamlit page, `app/.venv` with Python 3.12, `AppTest`) | pytest: 2 passed; Streamlit server started, `/_stcore/health` ok, page HTTP 200 on localhost | Browser check not installed (needs a ~150 MB download, the student's OK); page not yet seen in a browser |
-| 2026-11-20 | 2 | Data module moved into `app/creditlens/data/`; 5 items added (net income, current portion of debt, short-term borrowings, operating and finance leases); lease-inclusive debt tag removed (double counting); revenue, total assets and net income reconciled with the 10-K of AAPL, MSFT, NKE | pytest: 75 passed (18 reconciliation checks; the fy/end bug makes all 18 fail); real run on AAPL, MSFT, NKE | Human check of the 10-K pages pending; SEC terms page not yet read |
+| 2026-11-20 | 2 | Data module moved into `app/creditlens/data/`; 5 items added (net income, current portion of debt, short-term borrowings, operating and finance leases); lease-inclusive debt tag removed (double counting); revenue, total assets and net income reconciled with the 10-K of AAPL, MSFT, NKE | pytest: 73 passed (18 reconciliation checks; the fy/end bug makes all 18 fail); real run on AAPL, MSFT, NKE | Human check of the 10-K pages pending; SEC terms page not yet read |
 
 ## Known problems and open questions
 
