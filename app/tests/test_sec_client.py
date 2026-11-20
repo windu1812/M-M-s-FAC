@@ -1,11 +1,11 @@
-"""Tests for src/data/sec_client.py (no internet: see conftest.py)."""
+"""Tests for creditlens/data/sec_client.py (no internet: see conftest.py)."""
 
 import json
 import shutil
 
 import pytest
 
-from src.data import sec_client
+from creditlens.data import sec_client
 
 
 class FakeClock:

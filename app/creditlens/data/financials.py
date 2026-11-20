@@ -18,7 +18,7 @@ Classic pitfalls of companyfacts, and how they are handled here:
    the status "not available".
 
 Only the pure functions below read the JSON; the download itself is done by
-:mod:`src.data.sec_client`. This makes everything testable without internet.
+:mod:`creditlens.data.sec_client`. This makes everything testable without internet.
 """
 
 from __future__ import annotations
@@ -28,8 +28,8 @@ from datetime import date
 
 import pandas as pd
 
-from src.data import sec_client
-from src.data.xbrl_tags import FLOW, ITEMS
+from creditlens.data import sec_client
+from creditlens.data.xbrl_tags import FLOW, ITEMS
 
 TAXONOMY = "us-gaap"
 UNIT = "USD"
@@ -140,7 +140,7 @@ def extract_item(facts: dict, item: str, year_ends: list[str]) -> list[dict]:
     """Return one row per fiscal year end for one item (in ``year_ends`` order).
 
     For each year, the tags of the item are tried in priority order (see
-    :mod:`src.data.xbrl_tags`). Among the matching facts of the first tag that
+    :mod:`creditlens.data.xbrl_tags`). Among the matching facts of the first tag that
     has a value, the one from the most recent filing wins (the accession
     number breaks ties). If no tag has a value, a "not available" row is
     returned.
@@ -181,7 +181,7 @@ def build_financials(facts: dict, ticker: str, n_years: int = DEFAULT_YEARS) -> 
 
     The result has one row per (fiscal year, item), with the columns listed
     in ``COLUMNS``. Rows are ordered by fiscal year (most recent first), then
-    in the item order of :data:`src.data.xbrl_tags.ITEMS`.
+    in the item order of :data:`creditlens.data.xbrl_tags.ITEMS`.
 
     Raises:
         NoAnnualDataError: if no 10-K annual data is found.
@@ -207,7 +207,7 @@ def get_financials(
     """Return the annual 10-K financial data of a company as a DataFrame.
 
     Steps: ticker -> CIK -> companyfacts JSON (downloaded once, then read from
-    ``data/cache/``) -> clean table of the last ``n_years`` fiscal years.
+    ``app/cache/``) -> clean table of the last ``n_years`` fiscal years.
 
     Args:
         ticker: stock ticker, for example ``"AAPL"``.

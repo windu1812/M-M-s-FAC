@@ -1,6 +1,6 @@
-"""Tests for src/data/financials.py.
+"""Tests for creditlens/data/financials.py.
 
-All tests use the synthetic file tests/fixtures/companyfacts_sample.json
+All tests use the synthetic file app/tests/fixtures/companyfacts_sample.json
 (fictional company, fiscal year = calendar year, 10-Ks for 2018 to 2023).
 The expected numbers below are the ones written in that file.
 """
@@ -13,10 +13,10 @@ from datetime import date, timedelta
 import pandas as pd
 import pytest
 
-from src.data import financials as fin
-from src.data import sec_client
-from src.data.financials import STATUS_MISSING, STATUS_OK
-from src.data.xbrl_tags import ITEMS
+from creditlens.data import financials as fin
+from creditlens.data import sec_client
+from creditlens.data.financials import STATUS_MISSING, STATUS_OK
+from creditlens.data.xbrl_tags import ITEMS
 
 FY2022_10K = "0001234567-23-000010"
 FY2023_10K = "0001234567-24-000010"

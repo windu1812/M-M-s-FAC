@@ -1,10 +1,10 @@
 """Shared pytest setup.
 
-Every test runs offline and isolated (CLAUDE.md rule 11):
+Every test runs offline and isolated (AGENTS.md course rules):
 
 * ``requests.get`` is replaced by a function that fails, so a test that
   tries to reach the internet fails loudly;
-* the SEC cache points to a temporary folder, never to ``data/cache/``;
+* the SEC cache points to a temporary folder, never to ``app/cache/``;
 * the real ``.env`` is never read; a fake User-Agent is set instead.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import requests
 
-from src.data import sec_client
+from creditlens.data import sec_client
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 TEST_USER_AGENT = "CreditLens tests tests@example.com"
@@ -25,7 +25,7 @@ def offline_and_isolated(monkeypatch, tmp_path):
     """Block the internet, isolate the cache and the .env file for every test."""
 
     def blocked_get(*args, **kwargs):
-        raise RuntimeError("Tests must not call the internet (CLAUDE.md rule 11).")
+        raise RuntimeError("Tests must not call the internet (AGENTS.md course rules).")
 
     monkeypatch.setattr(requests, "get", blocked_get)
     monkeypatch.setattr(sec_client, "CACHE_DIR", tmp_path / "cache")
@@ -47,6 +47,6 @@ def fixtures_dir() -> Path:
 
 @pytest.fixture
 def sample_facts() -> dict:
-    """Synthetic companyfacts JSON (see tests/fixtures/companyfacts_sample.json)."""
+    """Synthetic companyfacts JSON (see app/tests/fixtures/companyfacts_sample.json)."""
     with (FIXTURES_DIR / "companyfacts_sample.json").open(encoding="utf-8") as f:
         return json.load(f)

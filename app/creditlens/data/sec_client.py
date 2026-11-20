@@ -1,11 +1,11 @@
 """Small client for the free SEC EDGAR APIs.
 
 This module is the only place in CreditLens that talks to the internet.
-It applies the SEC access rules of CLAUDE.md (rule 8):
+It applies the SEC access rules of AGENTS.md (course rules):
 
 * every request sends the User-Agent read from ``SEC_USER_AGENT`` in ``.env``;
 * at most 10 requests per second;
-* every download is cached as a JSON file in ``data/cache/``.
+* every download is cached as a JSON file in ``app/cache/``.
 """
 
 from __future__ import annotations
@@ -19,9 +19,10 @@ from typing import Callable
 import requests
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ENV_FILE = PROJECT_ROOT / ".env"
-CACHE_DIR = PROJECT_ROOT / "data" / "cache"
+# This file is app/creditlens/data/sec_client.py, so parents[2] is the app/ folder.
+APP_DIR = Path(__file__).resolve().parents[2]
+ENV_FILE = APP_DIR / ".env"
+CACHE_DIR = APP_DIR / "cache"
 
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANY_FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
@@ -74,9 +75,8 @@ _rate_limiter = RateLimiter(MIN_SECONDS_BETWEEN_REQUESTS)
 def get_user_agent(env_file: Path | None = None) -> str:
     """Return the SEC User-Agent read from the ``SEC_USER_AGENT`` setting.
 
-    The value is loaded from ``env_file`` (default: ``.env`` at the project
-    root) with python-dotenv; an environment variable that is already set
-    wins. The SEC requires a name and an email, for example
+    The value is loaded from ``env_file`` (default: ``app/.env``) with
+    python-dotenv; an environment variable that is already set wins. The SEC requires a name and an email, for example
     ``"First Last first.last@example.com"``.
 
     Raises:
@@ -86,8 +86,9 @@ def get_user_agent(env_file: Path | None = None) -> str:
     user_agent = os.getenv("SEC_USER_AGENT", "").strip()
     if not user_agent:
         raise SecConfigError(
-            "SEC_USER_AGENT is not set. Create a .env file at the project root "
-            "with a line like: SEC_USER_AGENT=First Last first.last@example.com"
+            "SEC_USER_AGENT is not set. In the app/ folder, run: cp .env.example .env, "
+            "then write your name and email in it, for example: "
+            "SEC_USER_AGENT=First Last first.last@example.com"
         )
     return user_agent
 
