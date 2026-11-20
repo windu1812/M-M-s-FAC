@@ -80,7 +80,7 @@ Agreed visuals:
 
 | Data | Source | Freshness | Licence / terms checked? |
 |---|---|---|---|
-| Ticker → CIK list | `https://www.sec.gov/files/company_tickers.json` | Downloaded once, then cached; refreshed on demand | Free public SEC data; User-Agent required, max 10 requests/s `[to confirm: one member reads SEC's "Accessing EDGAR Data" page in slice 2]` |
+| Ticker → CIK list | `https://www.sec.gov/files/company_tickers.json` | Downloaded once, then cached; refreshed on demand | Free public SEC data; User-Agent required, max 10 requests/s (checked by Arthur on 2026-11-20) |
 | Annual 10-K values (XBRL) | `https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json` | Latest 10-K filed; cached | Same as above |
 
 **Items extracted:**

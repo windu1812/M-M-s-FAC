@@ -57,7 +57,7 @@ No database.
 
 | Service | Used for | Setting names (values in `app/.env`, never committed) | Free tier / cost | Terms checked |
 |---|---|---|---|---|
-| SEC EDGAR (`www.sec.gov`, `data.sec.gov`) | Ticker list, XBRL companyfacts | `SEC_USER_AGENT` (name and email of a team member) | Free | `[to confirm in slice 2]` |
+| SEC EDGAR (`www.sec.gov`, `data.sec.gov`) | Ticker list, XBRL companyfacts | `SEC_USER_AGENT` (name and email of a team member) | Free | Checked by Arthur on 2026-11-20 (User-Agent required, max 10 requests/s) |
 
 No paid service is used (decision of 2026-11-20).
 
@@ -94,5 +94,5 @@ No paid service is used (decision of 2026-11-20).
 | 2026-11-20 | No paid service: the optional LLM credit comment is dropped | The team must not pay anything | Arthur |
 | 2026-11-20 | ~~Total debt always includes short-term borrowings and leases~~ (replaced by the next line) | – | Arthur |
 | 2026-11-20 | Total debt in two versions: "financial debt only" (default) and "including leases and short-term borrowings". A dashboard selector switches the debt-based numbers; the Excel file holds both. The data for both is extracted in slice 2 | Lets the analyst see reported debt and lease-adjusted leverage side by side | Arthur |
-| 2026-11-20 | Debt tags that already include leases (`LongTermDebtAndCapitalLeaseObligations`, `DebtCurrent`) are never used; for short-term borrowings the `ShortTermBorrowings` total comes before `CommercialPaper` | Avoids counting finance leases or commercial paper twice in the "including leases" total | Claude in slice 2; Arthur to confirm |
+| 2026-11-20 | Debt tags that already include leases (`LongTermDebtAndCapitalLeaseObligations`, `DebtCurrent`) are never used; for short-term borrowings the `ShortTermBorrowings` total comes before `CommercialPaper` | Avoids counting finance leases or commercial paper twice in the "including leases" total | Arthur (proposed by Claude in slice 2) |
 | 2026-11-20 | Scope and architecture agreed (product, visuals, MVP, stack, acceptance criteria, plan) | Answers to the 5 open questions | Arthur |

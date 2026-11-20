@@ -81,10 +81,11 @@ Items reported as "not available" by the companies' own XBRL data. These are not
 - Created the issue branches #6 to #9, starting from `docs/product-interview`.
 
 ### What the human checked
-- *To do (Arthur):*
-  - open the 6 statement pages cited in `docs/acceptance.md` (R1–R3) and confirm the 18 values;
+- Arthur did three checks on 2026-11-20:
+  - opened the 6 statement pages cited in `docs/acceptance.md` (R1–R3) and confirmed the 18 values;
   - read the SEC "Accessing EDGAR Data" page (fair access: User-Agent, 10 requests/s);
-  - confirm the removal of the lease-inclusive debt tag.
+  - confirmed the removal of the lease-inclusive debt tag.
+- Arthur chose to run the reviewer agents (`review-changes`) at the end of the project rather than after this slice.
 
 ### AI mistakes and how they were caught
 - A `sed` command did nothing at first: zsh does not split a variable into several file names. The AI caught it by
