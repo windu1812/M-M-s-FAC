@@ -4,4 +4,5 @@ CreditLens turns public SEC EDGAR filings into a 5-year credit screen (leverage,
 
 - The application lives in `app/`. Install, run and test instructions: see `app/README.md`.
 - Product documents: `docs/`. AI disclosure: `AI-USAGE.md`.
+- Team guide (in French: who does what, branches, pull requests): `docs/guide-equipe.md`.
 - EDHEC Business School - Programming and AI for Corporate Finance (FIN_8546), final project 2026-2027.

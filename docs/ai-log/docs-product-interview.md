@@ -44,3 +44,19 @@ Branch `docs/product-interview`. Tool: Claude Code (Claude Opus 5.5), skill `pro
   `localhost` in `app/.streamlit/config.toml`, then checked again.
 - The AI tried to move the root `.env` to `app/.env` at Arthur's request, without reading it. The project's
   permission rules blocked it, because the assistant must never touch `.env` files. Arthur does the move instead.
+
+## Team guide and branch clean-up (2026-11-20)
+- At Arthur's request, the AI checked the state of the branches and of the GitHub repository:
+  - PR #10 is not merged yet;
+  - the branches of issues #6 to #9 started from a commit of PR #10 (not from `main`) and missed its last commit;
+  - PR #4 would conflict with that commit on `docs/plan.md`;
+  - three old branches were already merged;
+  - Arthur is the only member with push access.
+- The AI wrote `docs/guide-equipe.md` in French:
+  - who does what (issue, branch, files, reviewer);
+  - first install;
+  - the routine of each session;
+  - commits and pull requests;
+  - conflicts and frequent errors.
+
+  The reviewer pairs and the "author merges with a merge commit" rule are proposals for the team to confirm.
