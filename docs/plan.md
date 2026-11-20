@@ -41,8 +41,9 @@ Status values: `todo`, `in progress`, `done (<date>, commit <short hash>)`, `blo
 ## Known problems and open questions
 
 1. **Owners** (set on 2026-11-20 by Arthur; members may swap if they agree): Arthur #3 and slice 7, Coco #6,
-   Maiwenn #7 and the hand-in documents of slice 7, Marc #8, François #9. Each member runs
-   `gh issue develop <n> --checkout` after the walking skeleton is merged.
+   Maiwenn #7 and the hand-in documents of slice 7, Marc #8, François #9. Each member's branch already exists,
+   linked to the issue and starting from `main`: `git switch <branch>`, never `gh issue develop` (see
+   `docs/guide-equipe.md`, sections 1 and 4).
 2. **Several headline ratios are "not available" for the demo companies.** The real run of PR #4 showed what the
    companies do not tag in standard XBRL:
    - MSFT tags no total D&A, so EBITDA, Net debt / EBITDA and EBITDA margin are not available;

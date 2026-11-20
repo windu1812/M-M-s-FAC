@@ -184,16 +184,56 @@ git merge origin/main --no-edit
 
 ### Pendant : travailler avec ton assistant IA
 
-Dans le terminal de VS Code, à la racine du projet, lance `claude` (ou ouvre Cline, en mode Plan). Pour la
-première séance, tu peux écrire par exemple :
+Dans le terminal de VS Code, à la racine du projet, lance `claude` (ou ouvre Cline, en mode Plan). Pour ta
+première séance, copie ta phrase de départ.
+
+**Coco**
 
 ```text
-/build-feature Je suis Coco. Tranche 3 de docs/plan.md (issue #6), sur ma branche
-6-ratios-compute-ebitda-total-debt-net-debt-and-the-credit-ratios.
+/build-feature Je suis Coco. Je fais la tranche 3 de docs/plan.md (Ratios), issue #6, sur ma branche
+6-ratios-compute-ebitda-total-debt-net-debt-and-the-credit-ratios. Mes fichiers : app/creditlens/ratios.py et
+app/tests/test_ratios.py. Lis l'issue avec gh issue view 6 et lis docs/guide-equipe.md, puis propose-moi un
+plan avant d'écrire du code.
 ```
 
-L'assistant lit les règles de l'équipe (`AGENTS.md`) et les documents de `docs/`. Il propose un plan avant d'écrire
-du code : lis-le, puis réponds « ok » ou pose tes questions. À la fin de chaque changement, il doit t'expliquer en
+**Maiwenn**
+
+```text
+/build-feature Je suis Maiwenn. Je fais la tranche 4 de docs/plan.md (Drapeaux), issue #7, sur ma branche
+7-flags-green-orange-red-thresholds-from-a-config-file. Mes fichiers : app/config/thresholds.toml,
+app/creditlens/flags.py et app/tests/test_flags.py. Lis l'issue avec gh issue view 7 et lis
+docs/guide-equipe.md, puis propose-moi un plan avant d'écrire du code.
+```
+
+**Marc**
+
+```text
+/build-feature Je suis Marc. Je fais la tranche 5 de docs/plan.md (Tableau de bord), issue #8, sur ma branche
+8-dashboard-ticker-input-summary-cards-and-5-year-ratio-table. Mes fichiers : app/streamlit_app.py,
+app/creditlens/display.py, app/tests/test_app.py et app/tests/test_display.py. Lis l'issue avec gh issue view 8
+et lis docs/guide-equipe.md, puis propose-moi un plan avant d'écrire du code.
+```
+
+**François**
+
+```text
+/build-feature Je suis François. Je fais la tranche 6 de docs/plan.md (Graphiques et export Excel), issue #9,
+sur ma branche 9-charts-and-excel-export. Mes fichiers : app/creditlens/charts.py, app/creditlens/export.py,
+app/tests/test_charts.py et app/tests/test_export.py. Dans app/streamlit_app.py (le fichier de Marc), je
+n'ajoute que les lignes qui placent mes graphiques et le bouton Excel. Lis l'issue avec gh issue view 9 et lis
+docs/guide-equipe.md, puis propose-moi un plan avant d'écrire du code.
+```
+
+Aux séances suivantes, il suffit d'écrire :
+
+```text
+Je suis <prénom>, je continue la tranche <n> (issue #<n>). Où en est-on d'après docs/plan.md et mon journal
+docs/ai-log/<ta-branche>.md ? Propose la prochaine étape.
+```
+
+L'assistant lit tout seul les règles de l'équipe (`AGENTS.md`). Ces règles le renvoient vers les documents de
+`docs/` et vers ce guide. Il propose un plan avant d'écrire du code : lis-le, puis réponds « ok » ou pose tes
+questions. À la fin de chaque changement, il doit t'expliquer en
 français simple chaque nouveau fichier et chaque nouvelle fonction. S'il ne le fait pas, demande-le-lui : tu devras
 savoir les expliquer pendant les questions du jury.
 
