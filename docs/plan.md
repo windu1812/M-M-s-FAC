@@ -7,7 +7,7 @@ checks and a commit. **Each member updates only the line of their own slice.**
 
 | # | Slice | GitHub issue | Owner | Acceptance criteria | Skills | Status |
 |---|---|---|---|---|---|---|
-| 1 | Walking skeleton: `app/` folder, Streamlit page with title, ticker field and Run button (no data yet), one passing `AppTest`, `app/README.md` | – (branch `docs/product-interview`) | Arthur | V2 | product-interview | done (2026-11-20), commit pending |
+| 1 | Walking skeleton: `app/` folder, Streamlit page with title, ticker field and Run button (no data yet), one passing `AppTest`, `app/README.md` | – (branch `docs/product-interview`) | Arthur | V2 | product-interview | done (2026-11-20, commit a665a3e) |
 | 2 | **Data:** move PR #4 into `app/creditlens/data/`; add net income, the current portion of long-term debt, short-term borrowings (commercial paper) and operating and finance lease liabilities, without double counting leases already inside long-term debt (both debt versions need them); reconcile revenue, total assets and net income with the 10-K (AAPL, MSFT, NKE) | #3 | Arthur | AC4, E7–E10 | build-feature, integrate-api, test-and-check | in review (PR #4), must be moved into `app/` |
 | 3 | **Ratios:** `compute_ratios` for the 9 numbers, the 4 debt-based ones in both versions (financial debt only / including leases and short-term borrowings), with the "not available" and "not meaningful" rules | #6 | Coco | AC5, CALC1–CALC11, CALC13, E1–E6b, E11 | build-feature, test-and-check | todo |
 | 4 | **Flags:** `thresholds.toml`, `apply_flags`, `overall_alert` (same thresholds for both debt versions) | #7 | Maiwenn | AC6, AC7, CALC12 | build-feature, test-and-check | todo |
