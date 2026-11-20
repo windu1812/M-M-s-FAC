@@ -247,3 +247,64 @@ def test_get_financials_end_to_end_from_cache(fixtures_dir):
     assert len(df) == 5 * len(ITEMS)
     assert row_for(df, "revenue", 2023)["value"] == 1400
     assert row_for(df, "total_assets", 2023)["value"] == 5600
+
+
+# --- Items added in slice 2 (net income, debt parts, leases) -----------------
+
+
+def test_contract_lists_every_item_the_ratios_need(df):
+    # Contract with the ratios slice (issue #6): these item names must exist.
+    needed = {
+        "revenue", "operating_income", "net_income", "depreciation_amortization",
+        "interest_expense", "total_assets", "total_liabilities", "stockholders_equity",
+        "current_assets", "current_liabilities", "cash", "long_term_debt",
+        "long_term_debt_current", "short_term_borrowings", "operating_lease_liabilities",
+        "finance_lease_liabilities", "operating_cash_flow", "capex",
+    }
+    assert set(df["item"]) == needed
+
+
+def test_net_income_is_the_parent_figure_not_profit_loss(df):
+    # ProfitLoss (155) includes noncontrolling interests: it must not be used.
+    row = row_for(df, "net_income", 2023)
+    assert row["value"] == 150
+    assert row["xbrl_tag"] == "NetIncomeLoss"
+    assert row_for(df, "net_income", 2021)["value"] == 100
+
+
+def test_current_portion_of_long_term_debt(df):
+    assert row_for(df, "long_term_debt_current", 2023)["value"] == 300
+    assert row_for(df, "long_term_debt_current", 2022)["value"] == 250
+    assert row_for(df, "long_term_debt_current", 2021)["status"] == STATUS_MISSING
+
+
+def test_short_term_borrowings_total_wins_over_commercial_paper(df):
+    # 2023: total short-term borrowings (200) already include commercial paper (150):
+    # taking the total avoids counting commercial paper twice.
+    row_2023 = row_for(df, "short_term_borrowings", 2023)
+    assert row_2023["value"] == 200
+    assert row_2023["xbrl_tag"] == "ShortTermBorrowings"
+    # 2022: only commercial paper is reported, so it is used.
+    row_2022 = row_for(df, "short_term_borrowings", 2022)
+    assert row_2022["value"] == 80
+    assert row_2022["xbrl_tag"] == "CommercialPaper"
+    assert row_for(df, "short_term_borrowings", 2021)["status"] == STATUS_MISSING
+
+
+def test_operating_and_finance_lease_liabilities(df):
+    assert row_for(df, "operating_lease_liabilities", 2023)["value"] == 400
+    assert row_for(df, "operating_lease_liabilities", 2022)["value"] == 380
+    assert row_for(df, "finance_lease_liabilities", 2023)["value"] == 100
+    # Not reported for 2022: marked missing, never set to zero here.
+    row = row_for(df, "finance_lease_liabilities", 2022)
+    assert row["status"] == STATUS_MISSING
+    assert math.isnan(row["value"])
+
+
+def test_long_term_debt_never_comes_from_a_tag_that_includes_leases(df):
+    # 2020 is only reported under LongTermDebtAndCapitalLeaseObligations (debt + finance
+    # leases). Using it would count finance leases twice in the "including leases" total.
+    assert row_for(df, "long_term_debt", 2020)["status"] == STATUS_MISSING
+    row_2023 = row_for(df, "long_term_debt", 2023)
+    assert row_2023["value"] == 2000
+    assert row_2023["xbrl_tag"] == "LongTermDebtNoncurrent"

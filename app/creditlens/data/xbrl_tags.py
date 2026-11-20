@@ -13,10 +13,22 @@ number in a ratio:
 
 * ``Depreciation`` alone (no amortization) is not D&A.
 * ``LongTermDebt`` includes the current portion; we want the noncurrent part.
+* ``LongTermDebtAndCapitalLeaseObligations`` (and its ``Current`` version)
+  include finance leases. The "including leases" total debt adds finance
+  leases separately, so these tags would count them twice; and they would
+  break the "financial debt only" total. They are never used.
+* ``DebtCurrent`` mixes short-term borrowings and the current portion of
+  long-term debt, which are separate items here.
+* ``ProfitLoss`` includes the profit of noncontrolling interests; net income
+  is the parent's (``NetIncomeLoss``).
 * ``CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents`` includes
   restricted cash.
 * Net interest tags (interest expense minus interest income) are not interest
   expense.
+
+For short-term borrowings, ``ShortTermBorrowings`` is the total and
+``CommercialPaper`` is one of its parts: the total comes first, so commercial
+paper is never added on top of it.
 
 If none of the tags has a value, the item is reported as "not available".
 
@@ -43,6 +55,12 @@ ITEMS = {
         "kind": FLOW,
         "tags": [
             "OperatingIncomeLoss",
+        ],
+    },
+    "net_income": {
+        "kind": FLOW,
+        "tags": [
+            "NetIncomeLoss",
         ],
     },
     "depreciation_amortization": {
@@ -104,7 +122,31 @@ ITEMS = {
         "kind": INSTANT,
         "tags": [
             "LongTermDebtNoncurrent",
-            "LongTermDebtAndCapitalLeaseObligations",
+        ],
+    },
+    "long_term_debt_current": {
+        "kind": INSTANT,
+        "tags": [
+            "LongTermDebtCurrent",
+        ],
+    },
+    "short_term_borrowings": {
+        "kind": INSTANT,
+        "tags": [
+            "ShortTermBorrowings",
+            "CommercialPaper",
+        ],
+    },
+    "operating_lease_liabilities": {
+        "kind": INSTANT,
+        "tags": [
+            "OperatingLeaseLiability",
+        ],
+    },
+    "finance_lease_liabilities": {
+        "kind": INSTANT,
+        "tags": [
+            "FinanceLeaseLiability",
         ],
     },
     "operating_cash_flow": {

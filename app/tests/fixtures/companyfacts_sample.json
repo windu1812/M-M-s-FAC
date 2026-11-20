@@ -84,6 +84,87 @@
             {"end": "2024-03-31", "val": 5700, "accn": "0001234567-24-000020", "fy": 2024, "fp": "Q1", "form": "10-Q", "filed": "2024-05-10"}
           ]
         }
+      },
+      "NetIncomeLoss": {
+        "label": "Net income attributable to the parent",
+        "units": {
+          "USD": [
+            {"start": "2021-01-01", "end": "2021-12-31", "val": 100, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 120, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"start": "2022-01-01", "end": "2022-12-31", "val": 120, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 150, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "ProfitLoss": {
+        "label": "Profit including noncontrolling interest (must NOT be used as net income)",
+        "units": {
+          "USD": [
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 155, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "LongTermDebtNoncurrent": {
+        "label": "Long-term debt, noncurrent",
+        "units": {
+          "USD": [
+            {"end": "2021-12-31", "val": 1900, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"end": "2022-12-31", "val": 1950, "accn": "0001234567-23-000010", "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-02-15"},
+            {"end": "2022-12-31", "val": 1950, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 2000, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "LongTermDebtAndCapitalLeaseObligations": {
+        "label": "Long-term debt INCLUDING finance leases (must NOT be used: leases would be counted twice)",
+        "units": {
+          "USD": [
+            {"end": "2020-12-31", "val": 1800, "accn": "0001234567-21-000010", "fy": 2020, "fp": "FY", "form": "10-K", "filed": "2021-02-12"}
+          ]
+        }
+      },
+      "LongTermDebtCurrent": {
+        "label": "Current portion of long-term debt",
+        "units": {
+          "USD": [
+            {"end": "2022-12-31", "val": 250, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 300, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "ShortTermBorrowings": {
+        "label": "Short-term borrowings, total (includes commercial paper)",
+        "units": {
+          "USD": [
+            {"end": "2023-12-31", "val": 200, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "CommercialPaper": {
+        "label": "Commercial paper (part of short-term borrowings)",
+        "units": {
+          "USD": [
+            {"end": "2022-12-31", "val": 80, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 150, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "OperatingLeaseLiability": {
+        "label": "Operating lease liabilities, total",
+        "units": {
+          "USD": [
+            {"end": "2022-12-31", "val": 380, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"},
+            {"end": "2023-12-31", "val": 400, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
+      },
+      "FinanceLeaseLiability": {
+        "label": "Finance lease liabilities, total (not reported for 2022)",
+        "units": {
+          "USD": [
+            {"end": "2023-12-31", "val": 100, "accn": "0001234567-24-000010", "fy": 2023, "fp": "FY", "form": "10-K", "filed": "2024-02-15"}
+          ]
+        }
       }
     }
   }
