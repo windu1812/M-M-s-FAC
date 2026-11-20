@@ -29,6 +29,7 @@ Status: agreed on 2026-11-20 (Arthur, for the team)
 | Display layer (shared, tested) | `app/creditlens/display.py` | Display-ready values for cards, charts, table and Excel: USD → USD m, rounding, "not available" / "not meaningful" labels with reasons, flag words | Call APIs or read files |
 | Ratios | `app/creditlens/ratios.py` | The 9 numbers of `product.md`, with their "not available" and "not meaningful" rules | Read files or call APIs |
 | Flags | `app/creditlens/flags.py`, `app/config/thresholds.toml` | Read the thresholds, give each ratio green / orange / red and each company an overall alert | Hard-code thresholds in Python |
+| Charts | `app/creditlens/charts.py` | Build the Plotly figures from display-ready values; the page only places them | Compute, round or decide that a value is missing |
 | Excel export | `app/creditlens/export.py` | Build the `.xlsx` file from the display tables | Compute ratios |
 | Data access | `app/creditlens/data/` (`sec_client.py`, `xbrl_tags.py`, `financials.py`, from PR #4) | SEC download, User-Agent, 10 requests/s, cache in `app/cache/`, extraction of annual 10-K values | Contain ratio or flag rules |
 | Tests | `app/tests/`, samples in `app/tests/fixtures/` | Logic, data access and the main journey (`AppTest`) | Call the internet |
