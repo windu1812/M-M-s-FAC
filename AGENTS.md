@@ -98,13 +98,14 @@ Next: <the suggested next step>
 
 ## This project (filled in by product-interview)
 
-- Product: see `docs/product.md`
-- Stack: `[not chosen yet]`
-- Python environment: `[not set up yet]` (version, `app/.venv`)
-- Install: `[not set up yet]`
-- Run: `[not set up yet]`
-- Test: `[not set up yet]`
-- Browser check: `[not set up yet]`
+- Product: see `docs/product.md` (CreditLens, agreed on 2026-11-20)
+- Stack: path A dashboard. Python, Streamlit, Plotly, pandas, requests + python-dotenv (SEC EDGAR), openpyxl (Excel),
+  pytest + Streamlit `AppTest`. No database: SEC JSON cached in `app/cache/`.
+- Python environment: Python 3.12 in `app/.venv`
+- Install: `cd app && python3.12 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt && cp .env.example .env`
+- Run: `cd app && .venv/bin/python -m streamlit run streamlit_app.py`, then open http://localhost:8501
+- Test: `cd app && .venv/bin/python -m pytest`
+- Browser check: `[not installed yet]`
 
 ## Team and course rules (FIN_8546 final project) - these override the general rules above when they differ
 

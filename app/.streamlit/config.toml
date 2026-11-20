@@ -1,0 +1,8 @@
+# Streamlit settings for this project (no secrets here).
+[browser]
+# Do not send usage statistics to Streamlit.
+gatherUsageStats = false
+
+[server]
+# Only this laptop can open the app (not other devices on the same network).
+address = "localhost"
