@@ -10,7 +10,7 @@ Each criterion is checkable: a starting state, an action and an expected result.
 | AC1 | F1 | The app is running and the SEC files of AAPL, MSFT and NKE are in the cache | The user types `AAPL, MSFT, NKE` and clicks Run | Within 60 seconds, 3 summary cards appear, each with the company name, the latest fiscal year and its end date | open |
 | AC2 | F1 | The app is running | The user types 6 tickers and clicks Run | The message "Enter 1 to 5 tickers" is shown and nothing is downloaded | open |
 | AC3 | F1 | The app is running | The user types `AAPL, ZZZZ` and clicks Run | ZZZZ shows "Ticker not found"; AAPL is shown normally | open |
-| AC4 | F1 | The reconciliation table below is filled from the 10-K filings | The test or the reconciler compares the app's figures | Revenue, total assets and net income (USD m) of the last 2 fiscal years equal the 10-K values for AAPL, MSFT and NKE, with the page cited | open |
+| AC4 | F1 | The reconciliation table below is filled from the 10-K filings | The test or the reconciler compares the app's figures | Revenue, total assets and net income (USD m) of the last 2 fiscal years equal the 10-K values for AAPL, MSFT and NKE, with the page cited | passing (test: `test_reconciliation_10k.py`, 18 checks); human check of the pages pending |
 | AC5 | F2 | A run with 1 to 5 companies | The user looks at the ratio table | Each company has 9 rows for the selected debt definition (EBITDA, total debt, net debt and the 6 ratios), 5 fiscal-year columns and a unit on every row | open |
 | AC5b | F2 | A run with 3 companies, "Financial debt only" selected | The user selects "Including leases and short-term borrowings" | Total debt, net debt, Net debt / EBITDA and Debt / equity change in the cards, charts, flags and table; the other ratios do not change. The Excel Ratios sheet holds both versions | open |
 | AC6 | F3 | The app shows AAPL with a red flag on current ratio | The team changes the current ratio limits in `thresholds.toml` and runs again | The flag changes, without any code change | open |
@@ -92,9 +92,9 @@ itself, never from the app's output.
 
 | Id | Ticker | Fiscal years | Items | 10-K value (USD m) and page | App value | Status |
 |---|---|---|---|---|---|---|
-| R1 | AAPL | last 2 | revenue, total assets, net income | to fill | – | open |
-| R2 | MSFT | last 2 | revenue, total assets, net income | to fill | – | open |
-| R3 | NKE | last 2 | revenue, total assets, net income | to fill | – | open |
+| R1 | AAPL | FY2026 / FY2025 | revenue, total assets, net income | Total net sales 478,834 / 416,161 and net income 132,175 / 112,010 (Consolidated Statements of Operations, p. 32); total assets 404,548 / 359,241 (Consolidated Balance Sheets, p. 34). [10-K](https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/aapl-20260926.htm) | equal, exact | passing (test: `test_reconciliation_10k.py`); 10-K values read by Claude from the filed document on 2026-11-20, **human check pending** |
+| R2 | MSFT | FY2026 / FY2025 | revenue, total assets, net income | Total revenue 331,839 / 281,724 and net income 133,749 / 101,832 (Income Statements, p. 50); total assets 758,376 / 619,003 (Balance Sheets, p. 52). [10-K](https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/msft-20260630.htm) | equal, exact | passing (test: `test_reconciliation_10k.py`); 10-K values read by Claude from the filed document on 2026-11-20, **human check pending** |
+| R3 | NKE | FY2026 / FY2025 | revenue, total assets, net income | Revenues 46,398 / 46,309 and net income 3,108 / 3,219 (Consolidated Statements of Income, p. 55); total assets 38,410 / 36,579 (Consolidated Balance Sheets, p. 57). [10-K](https://www.sec.gov/Archives/edgar/data/320187/000032018726000088/nke-20260531.htm) | equal, exact | passing (test: `test_reconciliation_10k.py`); 10-K values read by Claude from the filed document on 2026-11-20, **human check pending** |
 
 ## Edge cases and errors
 
@@ -107,8 +107,8 @@ itself, never from the app's output.
 | E5 | Net cash (cash > total debt) | Net debt and Net debt / EBITDA shown with a minus sign (see CALC11) | open |
 | E6 | A part of total debt other than noncurrent long-term debt is not reported (for example no commercial paper) | That part counts as zero, with the note "<part> not reported" (see CALC13) | open |
 | E6b | Noncurrent long-term debt not reported | Both versions of total debt, net debt, Net debt / EBITDA and Debt / equity show "not available: long-term debt not reported" | open |
-| E7 | SEC unreachable, cache present | Cached data used; "Data from cache, downloaded on <date>" shown | open |
+| E7 | SEC unreachable, cache present | Cached data used; "Data from cache, downloaded on <date>" shown | data part passing (test: `test_fetch_json_uses_cache_without_calling_internet`); the note on the page: slice 5 |
 | E8 | SEC unreachable, no cache | Error message for that ticker, no crash | open |
-| E9 | `SEC_USER_AGENT` not set | Message explaining how to create `app/.env`; no request is sent | open |
-| E10 | Company with no 10-K (for example a foreign filer that files a 20-F) | "No annual 10-K data for <ticker>" | open |
+| E9 | `SEC_USER_AGENT` not set | Message explaining how to create `app/.env`; no request is sent | data part passing (test: `test_fetch_json_without_user_agent_sends_nothing`); the message on the page: slice 5 |
+| E10 | Company with no 10-K (for example a foreign filer that files a 20-F) | "No annual 10-K data for <ticker>" | data part passing (test: `test_no_annual_data_raises_clear_error`); the message on the page: slice 5 |
 | E11 | Fewer than 5 fiscal years available | Only the real years are shown, with no filler years | open |

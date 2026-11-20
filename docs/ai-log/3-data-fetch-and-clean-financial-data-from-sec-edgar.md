@@ -45,3 +45,52 @@ Items reported as "not available" by the companies' own XBRL data. These are not
 
 ## Open points for the team
 - Should missing items be derived where it is accounting-exact? For example: total liabilities = total liabilities and equity minus equity (NKE), or D&A = depreciation + amortization (MSFT). Today nothing is derived (rule 9). This decision belongs to the analysis module.
+
+---
+
+## Session 2 (2026-11-20): move into `app/`, new items, 10-K reconciliation
+
+### What the AI did
+- Brought the course starter and the agreed documents into this branch by merging `docs/product-interview` (no
+  history rewritten). Two conflicts were resolved:
+  - `.gitignore` takes the starter version;
+  - the root `requirements.txt` is removed, because its packages are in `app/requirements*.txt`.
+- Moved the module and its tests with `git mv`, so their history is kept:
+  - `src/data/` → `app/creditlens/data/`;
+  - `tests/` → `app/tests/`.
+
+  The cache is now in `app/cache/` and the settings in `app/.env`.
+- Wrote 6 tests first and showed them failing, then added 5 items:
+  - `net_income` (`NetIncomeLoss`, never `ProfitLoss`);
+  - `long_term_debt_current`;
+  - `short_term_borrowings` (the `ShortTermBorrowings` total, else `CommercialPaper`);
+  - `operating_lease_liabilities`;
+  - `finance_lease_liabilities`.
+- Removed `LongTermDebtAndCapitalLeaseObligations` from long-term debt. That tag already includes finance leases,
+  so the "including leases" total would count them twice. One of the new tests showed that the old list used it.
+- Reconciled revenue, total assets and net income for FY2026 and FY2025 of AAPL, MSFT and NKE:
+  - the values were read from the filed 10-K HTML documents (statements, page cited), independently of the app's
+    XBRL extraction;
+  - all 18 values are equal;
+  - `test_reconciliation_10k.py` checks them offline on small extracts of the real SEC data;
+  - injecting the fy/end bug makes all 18 fail.
+- Found 44 untracked "… 2" copies in the working tree, plus `.git/index 2`. These are iCloud Desktop sync
+  duplicates, not created by the AI. It compared each one with its original: 40 were identical, and 4 were older
+  drafts of the docs. It moved them to a backup folder outside the project instead of deleting them, then checked
+  `git status` (clean) and `git fsck` (no errors).
+- Created the issue branches #6 to #9, starting from `docs/product-interview`.
+
+### What the human checked
+- *To do (Arthur):*
+  - open the 6 statement pages cited in `docs/acceptance.md` (R1–R3) and confirm the 18 values;
+  - read the SEC "Accessing EDGAR Data" page (fair access: User-Agent, 10 requests/s);
+  - confirm the removal of the lease-inclusive debt tag.
+
+### AI mistakes and how they were caught
+- A `sed` command did nothing at first: zsh does not split a variable into several file names. The AI caught it by
+  re-checking with `grep`, which still found the old imports, and re-ran it with an explicit file list.
+- The first version of the missing User-Agent message read badly ("then add with a line like"). The AI caught it
+  while reviewing the `sed` result and rewrote it.
+- The first 10-K parser found no MSFT income statement. Microsoft's HTML splits the title ("INC OME STATEMENTS")
+  and puts each cell on its own line. The AI found the page through the 10-K's own index (page 50) and read the
+  rows from there.
