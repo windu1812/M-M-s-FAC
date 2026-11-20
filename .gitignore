@@ -6,3 +6,7 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 .DS_Store
+
+# Downloaded SEC data (rule 8: cache, never committed)
+data/cache/
+.pytest_cache/
