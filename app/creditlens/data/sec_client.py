@@ -15,6 +15,7 @@ import os
 import time
 from pathlib import Path
 from typing import Callable
+from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
@@ -38,6 +39,15 @@ class SecConfigError(RuntimeError):
 
 class TickerNotFoundError(ValueError):
     """Raised when a ticker is not in the SEC ticker list."""
+
+
+class SecUnavailableError(RuntimeError):
+    """Raised when a file is not in the cache and the SEC cannot provide it.
+
+    Causes: no internet connection, no answer in time, an error status from the
+    SEC (for example 503 or 429), or an answer that is not JSON. The message
+    can be shown to the user as it is.
+    """
 
 
 class RateLimiter:
@@ -102,7 +112,8 @@ def fetch_json(url: str, cache_file: Path, refresh: bool = False) -> dict:
 
     Raises:
         SecConfigError: if the User-Agent is not configured.
-        requests.HTTPError: if the SEC answers with an error status.
+        SecUnavailableError: if the download fails (see that class). Nothing
+            is written to the cache in that case.
     """
     if cache_file.exists() and not refresh:
         with cache_file.open(encoding="utf-8") as f:
@@ -110,9 +121,12 @@ def fetch_json(url: str, cache_file: Path, refresh: bool = False) -> dict:
 
     headers = {"User-Agent": get_user_agent(), "Accept-Encoding": "gzip, deflate"}
     _rate_limiter.wait()
-    response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
-    response.raise_for_status()
-    data = response.json()
+    try:
+        response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as error:
+        raise SecUnavailableError(_explain_download_error(url, error)) from error
 
     # Write to a temporary file first so an interrupted run never leaves a
     # half-written file in the cache.
@@ -122,6 +136,34 @@ def fetch_json(url: str, cache_file: Path, refresh: bool = False) -> dict:
         json.dump(data, f)
     tmp_file.replace(cache_file)
     return data
+
+
+def _explain_download_error(url: str, error: requests.RequestException) -> str:
+    """Turn a failed download into a message a user can read.
+
+    The order of the checks matters: a connection timeout is both a
+    ``Timeout`` and a ``ConnectionError`` in requests.
+    """
+    host = urlparse(url).netloc
+    if isinstance(error, requests.Timeout):
+        reason = f"no answer within {REQUEST_TIMEOUT_SECONDS} seconds"
+        advice = "Check the internet connection and try again."
+    elif isinstance(error, requests.ConnectionError):
+        reason = "no internet connection"
+        advice = "Check the internet connection and try again."
+    elif isinstance(error, requests.HTTPError) and error.response is not None:
+        reason = f"the SEC answered with HTTP status {error.response.status_code}"
+        advice = "Try again in a few minutes."
+    elif isinstance(error, requests.exceptions.JSONDecodeError):
+        reason = "the answer was not valid JSON"
+        advice = "Try again in a few minutes."
+    else:
+        reason = "the request failed"
+        advice = "Try again in a few minutes."
+    return (
+        f"Could not get data from the SEC ({host}): {reason}. "
+        f"No copy is saved in the cache yet, so there is no data to show. {advice}"
+    )
 
 
 def get_cik(ticker: str, refresh: bool = False) -> str:

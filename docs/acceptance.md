@@ -108,7 +108,7 @@ itself, never from the app's output.
 | E6 | A part of total debt other than noncurrent long-term debt is not reported (for example no commercial paper) | That part counts as zero, with the note "<part> not reported" (see CALC13) | open |
 | E6b | Noncurrent long-term debt not reported | Both versions of total debt, net debt, Net debt / EBITDA and Debt / equity show "not available: long-term debt not reported" | open |
 | E7 | SEC unreachable, cache present | Cached data used; "Data from cache, downloaded on <date>" shown | data part passing (test: `test_fetch_json_uses_cache_without_calling_internet`); the note on the page: slice 5 |
-| E8 | SEC unreachable, no cache | Error message for that ticker, no crash | open |
+| E8 | SEC unreachable, no cache | Error message for that ticker, no crash | data part passing (tests: `test_fetch_json_sec_unreachable_without_cache_raises_clear_error`, `test_get_financials_sec_unreachable_without_cache_raises_clear_error`); the message on the page: slice 5 |
 | E9 | `SEC_USER_AGENT` not set | Message explaining how to create `app/.env`; no request is sent | data part passing (test: `test_fetch_json_without_user_agent_sends_nothing`); the message on the page: slice 5 |
 | E10 | Company with no 10-K (for example a foreign filer that files a 20-F) | "No annual 10-K data for <ticker>" | data part passing (test: `test_no_annual_data_raises_clear_error`); the message on the page: slice 5 |
 | E11 | Fewer than 5 fiscal years available | Only the real years are shown, with no filler years | open |

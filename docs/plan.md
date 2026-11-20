@@ -7,8 +7,8 @@ checks and a commit. **Each member updates only the line of their own slice.**
 
 | # | Slice | GitHub issue | Owner | Acceptance criteria | Skills | Status |
 |---|---|---|---|---|---|---|
-| 1 | Walking skeleton: `app/` folder, Streamlit page with title, ticker field and Run button (no data yet), one passing `AppTest`, `app/README.md` | – (branch `docs/product-interview`) | Arthur | V2 | product-interview | done (2026-11-20, commit a665a3e) |
-| 2 | **Data:** move PR #4 into `app/creditlens/data/`; add net income, the current portion of long-term debt, short-term borrowings (commercial paper) and operating and finance lease liabilities, without double counting leases already inside long-term debt (both debt versions need them); reconcile revenue, total assets and net income with the 10-K (AAPL, MSFT, NKE) | #3 | Arthur | AC4, E7–E10 | build-feature, integrate-api, test-and-check | done (2026-11-20, commits 7b9fba9, bd88239, 36cbe7d); PR #4, to merge after #10 |
+| 1 | Walking skeleton: `app/` folder, Streamlit page with title, ticker field and Run button (no data yet), one passing `AppTest`, `app/README.md` | – (branch `docs/product-interview`) | Arthur | V2 | product-interview | done (2026-11-20, commit a665a3e; merged with PR #10) |
+| 2 | **Data:** move PR #4 into `app/creditlens/data/`; add net income, the current portion of long-term debt, short-term borrowings (commercial paper) and operating and finance lease liabilities, without double counting leases already inside long-term debt (both debt versions need them); reconcile revenue, total assets and net income with the 10-K (AAPL, MSFT, NKE) | #3 | Arthur | AC4, E7–E10 | build-feature, integrate-api, test-and-check | done (2026-11-20, commits 7b9fba9, bd88239, 36cbe7d; merged with PR #4); E8 error: branch `fix/data-sec-unreachable` |
 | 3 | **Ratios:** `compute_ratios` for the 9 numbers, the 4 debt-based ones in both versions (financial debt only / including leases and short-term borrowings), with the "not available" and "not meaningful" rules | #6 | Coco | AC5, CALC1–CALC11, CALC13, E1–E6b, E11 | build-feature, test-and-check | todo |
 | 4 | **Flags:** `thresholds.toml`, `apply_flags`, `overall_alert` (same thresholds for both debt versions) | #7 | Maiwenn | AC6, AC7, CALC12 | build-feature, test-and-check | todo |
 | 5 | **Dashboard:** ticker input and its checks, summary cards, ratio table with colours, "View underlying data", empty / loading / error states, debt definition selector | #8 | Marc | AC1–AC3, AC5b, AC7, V1–V3 | build-feature, design-interface | todo |
@@ -23,7 +23,7 @@ checks and a commit. **Each member updates only the line of their own slice.**
 
 **Proposed dates `[to confirm]`:**
 - slices 2 to 6 opened as pull requests by Thursday 26 November;
-- integration (slice 8) on 27–29 November;
+- integration (slice 7) on 27–29 November;
 - demo rehearsal on 30 November;
 - hand-in by Tuesday 1 December 2026, 23:59.
 
@@ -36,6 +36,7 @@ Status values: `todo`, `in progress`, `done (<date>, commit <short hash>)`, `blo
 | 2026-11-20 | 2 | PR #4: SEC client, XBRL extraction (13 items), 47 offline tests | pytest: 47 passed; real run on AAPL, MSFT and NKE | Built in `src/` before the starter: must move to `app/` |
 | 2026-11-20 | 1 | Product documents agreed; issues #6–#9 created; walking skeleton in `app/` (Streamlit page, `app/.venv` with Python 3.12, `AppTest`) | pytest: 2 passed; Streamlit server started, `/_stcore/health` ok, page HTTP 200 on localhost | Browser check not installed (needs a ~150 MB download, the student's OK); page not yet seen in a browser |
 | 2026-11-20 | 2 | Data module moved into `app/creditlens/data/`; 5 items added (net income, current portion of debt, short-term borrowings, operating and finance leases); lease-inclusive debt tag removed (double counting); revenue, total assets and net income reconciled with the 10-K of AAPL, MSFT, NKE | pytest: 73 passed (18 reconciliation checks; the fy/end bug makes all 18 fail); real run on AAPL, MSFT, NKE | None. Arthur checked the 10-K pages and the SEC access terms on 2026-11-20 |
+| 2026-11-20 | 2 | E8 data part: `SecUnavailableError` with a readable message when a file is not in the cache and the SEC cannot provide it (no internet, timeout, error status, answer not JSON); nothing is written to the cache. Plan statuses updated after the merge of PR #10 and PR #4 | pytest: 79 passed (6 new tests, 5 seen failing first); real run with a refused connection and an empty cache: clear message, cache untouched | No retry. With `refresh=True` and the SEC down, the error is raised even if an older copy is in the cache |
 
 ## Known problems and open questions
 

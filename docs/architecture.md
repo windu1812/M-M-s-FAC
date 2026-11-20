@@ -44,6 +44,13 @@ Status: agreed on 2026-11-20 (Arthur, for the team)
 | `flags.apply_flags(ratios, thresholds)` | same rows as `compute_ratios` | the columns above plus `flag` (`green` / `orange` / `red` / empty when there is no value) |
 | `flags.overall_alert(flagged, ticker)` | one alert | `level` (`green` / `orange` / `red`), `text` (for example "Red: 2 red flags, 1 not available") |
 
+**Errors from the data part.** `get_financials(ticker)` raises one of the following. Each message can be shown to
+the user as it is. The page catches them for each ticker and still shows the other companies (V3).
+- `sec_client.SecConfigError`: `SEC_USER_AGENT` is not set (E9).
+- `sec_client.TickerNotFoundError`: the ticker is not in the SEC list.
+- `sec_client.SecUnavailableError`: the SEC cannot be reached and nothing is in the cache (E8).
+- `financials.NoAnnualDataError`: the company has no annual 10-K data (E10).
+
 ## Data model
 
 No database.
@@ -96,3 +103,4 @@ No paid service is used (decision of 2026-11-20).
 | 2026-11-20 | Total debt in two versions: "financial debt only" (default) and "including leases and short-term borrowings". A dashboard selector switches the debt-based numbers; the Excel file holds both. The data for both is extracted in slice 2 | Lets the analyst see reported debt and lease-adjusted leverage side by side | Arthur |
 | 2026-11-20 | Debt tags that already include leases (`LongTermDebtAndCapitalLeaseObligations`, `DebtCurrent`) are never used; for short-term borrowings the `ShortTermBorrowings` total comes before `CommercialPaper` | Avoids counting finance leases or commercial paper twice in the "including leases" total | Arthur (proposed by Claude in slice 2) |
 | 2026-11-20 | Scope and architecture agreed (product, visuals, MVP, stack, acceptance criteria, plan) | Answers to the 5 open questions | Arthur |
+| 2026-11-20 | Every failed SEC download (no internet, timeout, error status, answer not JSON) becomes `SecUnavailableError` with a readable message; nothing is written to the cache | The page needs one error type to catch per ticker (E8, V3) | Arthur (proposed by Claude) |

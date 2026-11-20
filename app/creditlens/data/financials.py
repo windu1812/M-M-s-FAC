@@ -217,6 +217,13 @@ def get_financials(
     Returns:
         A DataFrame with the columns of ``COLUMNS``. Missing values have
         ``value`` = NaN and ``status`` = "not available".
+
+    Raises (each with a message that can be shown to the user for this ticker):
+        sec_client.SecConfigError: ``SEC_USER_AGENT`` is not set in ``app/.env``.
+        sec_client.TickerNotFoundError: the ticker is not in the SEC list.
+        sec_client.SecUnavailableError: the data is not in the cache and the
+            SEC cannot provide it (no internet, error status, bad answer).
+        NoAnnualDataError: the company has no annual 10-K data.
     """
     cik = sec_client.get_cik(ticker, refresh=refresh)
     facts = sec_client.get_company_facts(cik, refresh=refresh)
