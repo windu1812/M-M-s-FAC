@@ -55,8 +55,8 @@ Claude Code (Claude Opus 5.5), skills `build-feature` and `test-and-check`.
 ### What the human decided or checked
 - Coco asked the AI to do Coco's tasks from the team guide, with commits and a push on a separate branch
   (2026-11-25). The delegation is written in the decision log of `docs/architecture.md`.
-- *To do:* read `ratios.py` and the decisions of 2026-11-25 in `docs/architecture.md` (units, reasons), so that
-  Coco can explain them in the Q&A.
+- Coco read the changes (`ratios.py`, the tests and the decisions of 2026-11-25 in `docs/architecture.md`) and
+  asked to mark pull request #13 as ready for review (2026-11-25).
 
 ### AI mistakes and how they were caught
 - The first version of the acceptance update was written by a Python script with Windows line endings (CRLF). Git
