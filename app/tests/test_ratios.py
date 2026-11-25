@@ -132,25 +132,30 @@ def test_the_example_company_has_no_missing_value(sample):
 # --- Known answers CALC1 to CALC9 (docs/acceptance.md) --------------------------------
 
 
+KNOWN_ANSWERS = [
+    # (id in docs/acceptance.md, metric, expected result, tolerance)
+    ("CALC1", "ebitda", 1_200, EXACT),
+    ("CALC2a", "total_debt", 2_300, EXACT),
+    ("CALC2b", "total_debt_incl_leases", 3_000, EXACT),
+    ("CALC3a", "net_debt", 1_700, EXACT),
+    ("CALC3b", "net_debt_incl_leases", 2_400, EXACT),
+    ("CALC4a", "net_debt_to_ebitda", 1.42, TOLERANCE_RATIO),
+    ("CALC4b", "net_debt_to_ebitda_incl_leases", 2.00, TOLERANCE_RATIO),
+    ("CALC5a", "debt_to_equity", 1.53, TOLERANCE_RATIO),
+    ("CALC5b", "debt_to_equity_incl_leases", 2.00, TOLERANCE_RATIO),
+    ("CALC6", "interest_coverage", 8.00, TOLERANCE_RATIO),
+    ("CALC7", "current_ratio", 1.50, TOLERANCE_RATIO),
+    ("CALC8", "ebitda_margin", 20.0, TOLERANCE_MARGIN),
+    ("CALC9", "free_cash_flow", 1_100, EXACT),
+]
+
+
 @pytest.mark.parametrize(
-    "calc, metric, expected, tolerance",
-    [
-        ("CALC1", "ebitda", 1_200, EXACT),
-        ("CALC2a", "total_debt", 2_300, EXACT),
-        ("CALC2b", "total_debt_incl_leases", 3_000, EXACT),
-        ("CALC3a", "net_debt", 1_700, EXACT),
-        ("CALC3b", "net_debt_incl_leases", 2_400, EXACT),
-        ("CALC4a", "net_debt_to_ebitda", 1.42, TOLERANCE_RATIO),
-        ("CALC4b", "net_debt_to_ebitda_incl_leases", 2.00, TOLERANCE_RATIO),
-        ("CALC5a", "debt_to_equity", 1.53, TOLERANCE_RATIO),
-        ("CALC5b", "debt_to_equity_incl_leases", 2.00, TOLERANCE_RATIO),
-        ("CALC6", "interest_coverage", 8.00, TOLERANCE_RATIO),
-        ("CALC7", "current_ratio", 1.50, TOLERANCE_RATIO),
-        ("CALC8", "ebitda_margin", 20.0, TOLERANCE_MARGIN),
-        ("CALC9", "free_cash_flow", 1_100, EXACT),
-    ],
+    "metric, expected, tolerance",
+    [case[1:] for case in KNOWN_ANSWERS],
+    ids=[case[0] for case in KNOWN_ANSWERS],  # run one with: pytest -k CALC4a
 )
-def test_known_answer(sample, calc, metric, expected, tolerance):
+def test_known_answer(sample, metric, expected, tolerance):
     assert_ok(ratios.compute_ratios(sample), metric, expected, tolerance)
 
 
