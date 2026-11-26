@@ -19,5 +19,15 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
 - Checked that the tests catch real mistakes: two deliberate bugs (missing drawn as 0; lines joined across gaps)
   made 7 and 1 tests fail; the code was then restored.
 
+### 2026-11-26, step 6b: the Excel file
+- Proposed the layout of the 4 sheets (Summary, Ratios, Financials, Notes) and the format of the underlying-data
+  table, added to the decision of 2026-11-26 in `docs/architecture.md` (to confirm by Marc).
+- Wrote 15 tests first (`app/tests/test_export.py`), seen failing (module missing), then wrote
+  `app/creditlens/export.py`. The main test reads the file back and compares every Ratios cell with the display
+  table (AC9). Numbers stay numbers with an Excel format that shows the screen rounding; a missing value is written
+  as its reason, never as 0.
+- Two deliberate bugs (missing written as 0; Summary ignoring the debt definition) made 5 and 1 tests fail; the code
+  was then restored.
+
 ## Reviewed by the student
 - [ ] François read the code and this log.

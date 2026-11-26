@@ -58,3 +58,6 @@ GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,interest_coverage,Interest coverage,
 GAMA,Gamma Co (SAMPLE DATA),2024,2024-05-31,free_cash_flow,Free cash flow,USD m,120,120 USD m,ok,green
 GAMA,Gamma Co (SAMPLE DATA),2025,2025-05-31,free_cash_flow,Free cash flow,USD m,-50,-50 USD m,ok,red
 GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,free_cash_flow,Free cash flow,USD m,0,0 USD m,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,current_ratio,Current ratio,x,1.50,1.50x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,current_ratio,Current ratio,x,0.95,0.95x,ok,red
+GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,current_ratio,Current ratio,x,,not available: current liabilities not reported,not available,
