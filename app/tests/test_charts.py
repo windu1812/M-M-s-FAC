@@ -102,6 +102,7 @@ def test_bars_show_the_screen_text_and_flag_colour(display):
     fig = charts.comparison_bar_chart(display, "net_debt_to_ebitda", THRESHOLDS)
     bar = fig.data[0]
     assert list(bar.text) == ["-0.20x", "2.40x", ""]
+    assert bar.cliponaxis is False  # seen on screen: the minus sign of -0.20x was cut off
     assert list(bar.marker.color) == [
         charts.FLAG_COLOURS["green"],
         charts.FLAG_COLOURS["orange"],

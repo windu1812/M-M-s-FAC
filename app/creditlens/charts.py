@@ -91,8 +91,8 @@ def _flag_colour(flag) -> str:
 def _add_sample_mark(fig: go.Figure) -> None:
     fig.add_annotation(
         text="SAMPLE DATA",
-        xref="paper", yref="paper", x=1, y=1.12,
-        xanchor="right", showarrow=False,
+        xref="paper", yref="paper", x=1, y=1.2,  # in the title margin, clear of the threshold labels
+        xanchor="right", yanchor="bottom", showarrow=False,
         font={"size": 16, "color": "#c62828"},
     )
 
@@ -102,7 +102,7 @@ def _add_note(fig: go.Figure, text: str, y: float) -> None:
         text=text,
         xref="paper", yref="paper", x=0, y=y,
         xanchor="left", yanchor="top", align="left", showarrow=False,
-        font={"size": 11, "color": "#595959"},
+        font={"size": 11},  # theme text colour, readable on a light or dark page
     )
 
 
@@ -157,6 +157,7 @@ def comparison_bar_chart(
             y=labels,
             text=[r.text if pd.notna(r.value) else "" for r in ordered.itertuples()],
             textposition="outside",
+            cliponaxis=False,  # keep the minus sign of a negative value visible
             marker={"color": [_flag_colour(f) for f in ordered["flag"]]},
             hovertext=[
                 f"{r.company}<br>FY{r.fiscal_year}, year ended {r.period_end}<br>{r.text}"
@@ -170,7 +171,7 @@ def comparison_bar_chart(
         if pd.isna(r.value):
             fig.add_annotation(
                 x=0, y=label, text=f"n/a ({r.text})",
-                xanchor="left", showarrow=False, font={"color": "#595959"},
+                xanchor="left", showarrow=False,
             )
 
     unit = rows.iloc[0]["unit"]
