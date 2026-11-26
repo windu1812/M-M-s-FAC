@@ -36,6 +36,7 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
   grey notes were hard to read on a dark page. Fixed in `charts.py`; a test now checks the first one.
 - Checked AC8 by hand on the trial page: picking "Interest coverage" switches both charts; BETA has no bar and no
   point, with "n/a (not available: interest expense not reported)".
+- François downloaded the Excel file from the trial page, opened it and approved the layout.
 
 ## Reviewed by the student
 - [ ] François read the code and this log.
