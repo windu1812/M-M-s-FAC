@@ -1,0 +1,25 @@
+# SAMPLE DATA - synthetic company, NOT a real filing. Used only by app/tests/test_ratios.py.
+# Same columns as data.financials.get_financials (docs/architecture.md, "Contracts between parts"); values in USD.
+# The ratio inputs are the "Example company" of docs/acceptance.md (in USD m there): revenue 6,000, operating income 1,000,
+# D&A 200, interest expense 125, long-term debt 2,000, current portion 300, short-term borrowings 200,
+# operating leases 400, finance leases 100, cash 600, equity 1,500, current assets 1,800, current liabilities 1,200,
+# operating cash flow 1,500, capex 400. Net income, total assets and total liabilities are not used by any ratio.
+company,ticker,fiscal_year,period_end,item,value,unit,xbrl_tag,form,filed,accession,status
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,revenue,6000000000,USD,Revenues,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,operating_income,1000000000,USD,OperatingIncomeLoss,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,net_income,700000000,USD,NetIncomeLoss,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,depreciation_amortization,200000000,USD,DepreciationDepletionAndAmortization,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,interest_expense,125000000,USD,InterestExpense,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,total_assets,6000000000,USD,Assets,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,total_liabilities,4500000000,USD,Liabilities,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,stockholders_equity,1500000000,USD,StockholdersEquity,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,current_assets,1800000000,USD,AssetsCurrent,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,current_liabilities,1200000000,USD,LiabilitiesCurrent,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,cash,600000000,USD,CashAndCashEquivalentsAtCarryingValue,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,long_term_debt,2000000000,USD,LongTermDebtNoncurrent,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,long_term_debt_current,300000000,USD,LongTermDebtCurrent,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,short_term_borrowings,200000000,USD,ShortTermBorrowings,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,operating_lease_liabilities,400000000,USD,OperatingLeaseLiability,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,finance_lease_liabilities,100000000,USD,FinanceLeaseLiability,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,operating_cash_flow,1500000000,USD,NetCashProvidedByUsedInOperatingActivities,10-K,2027-02-15,0000000000-27-000001,ok
+Example Co (SAMPLE DATA),SMPL,2026,2026-12-31,capex,400000000,USD,PaymentsToAcquirePropertyPlantAndEquipment,10-K,2027-02-15,0000000000-27-000001,ok
