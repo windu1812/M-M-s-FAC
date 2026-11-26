@@ -39,4 +39,5 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
 - François downloaded the Excel file from the trial page, opened it and approved the layout.
 
 ## Reviewed by the student
-- [ ] François read the code and this log.
+- [x] François read the code and this log (2026-11-26; `comparison_bar_chart`, `trend_line_chart` and `build_excel`
+  explained to him function by function).
