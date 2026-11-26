@@ -1,0 +1,57 @@
+# Flag thresholds of CreditLens (green / orange / red).
+#
+# Starting values agreed on 2026-11-20 (docs/acceptance.md, "Thresholds").
+# The team can change the numbers here without touching any Python code (AC6):
+# save the file and click Run again.
+#
+# One section per ratio. Each section has:
+#   direction = "lower_is_better"  -> green if value <= green, orange if value <= orange, red above
+#               "higher_is_better" -> green if value >= green, orange if value >= orange, red below
+#   green     = the limit of the green zone
+#   orange    = the limit of the orange zone (leave it out when there is no orange zone)
+#
+# A value exactly on a limit takes the better colour.
+# The value is compared as it is shown on screen: ratios rounded to 2 decimals,
+# the EBITDA margin to 1 decimal, amounts to 0 decimals.
+#
+# The same thresholds are used for both debt versions ("financial debt only" and
+# "including leases and short-term borrowings").
+#
+# Units are those of creditlens/ratios.py: ratios in times (x), EBITDA margin in
+# PERCENT (20 means 20 %), free cash flow in USD millions.
+
+[net_debt_to_ebitda]
+label = "Net debt / EBITDA"
+direction = "lower_is_better"
+green = 2.0
+orange = 3.5
+
+[debt_to_equity]
+label = "Debt / equity"
+direction = "lower_is_better"
+green = 1.0
+orange = 2.0
+
+[interest_coverage]
+label = "Interest coverage"
+direction = "higher_is_better"
+green = 6.0
+orange = 3.0
+
+[current_ratio]
+label = "Current ratio"
+direction = "higher_is_better"
+green = 1.5
+orange = 1.0
+
+[ebitda_margin]
+label = "EBITDA margin"
+direction = "higher_is_better"
+green = 20.0
+orange = 10.0
+
+[free_cash_flow]
+label = "Free cash flow"
+direction = "higher_is_better"
+green = 0.0
+# no orange zone: >= 0 is green, < 0 is red
