@@ -1,0 +1,60 @@
+# SAMPLE DATA - synthetic companies, NOT real filings. Used only by app/tests/test_charts.py and test_export.py.
+# Format proposed for the display table of creditlens/display.py (slice 5, Marc): one row per (ticker, fiscal year, metric),
+# the rows of flags.apply_flags with display-ready values. "value" is already rounded as on screen (ratios 2 decimals,
+# margin 1 decimal, amounts 0 decimals) and is empty when there is no number; "text" is what the screen shows.
+# ALFA: 5 full years, latest net debt / EBITDA orange. BETA: net debt / EBITDA missing in FY2024-FY2025 (a gap),
+# net cash in FY2026 (negative value), no interest coverage at all. GAMA: only 3 years, latest net debt / EBITDA
+# "not meaningful", a real zero free cash flow in FY2026. The year-ends differ (Dec, Jun, May), like AAPL, MSFT, NKE.
+ticker,company,fiscal_year,period_end,metric,label,unit,value,text,status,flag
+ALFA,Alpha Corp (SAMPLE DATA),2022,2022-12-31,net_debt_to_ebitda,Net debt / EBITDA,x,1.10,1.10x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2023,2023-12-31,net_debt_to_ebitda,Net debt / EBITDA,x,1.25,1.25x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2024,2024-12-31,net_debt_to_ebitda,Net debt / EBITDA,x,1.42,1.42x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2025,2025-12-31,net_debt_to_ebitda,Net debt / EBITDA,x,1.80,1.80x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,net_debt_to_ebitda,Net debt / EBITDA,x,2.40,2.40x,ok,orange
+ALFA,Alpha Corp (SAMPLE DATA),2022,2022-12-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,1.60,1.60x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2023,2023-12-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,1.75,1.75x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2024,2024-12-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,2.00,2.00x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2025,2025-12-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,2.30,2.30x,ok,orange
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,2.90,2.90x,ok,orange
+ALFA,Alpha Corp (SAMPLE DATA),2022,2022-12-31,interest_coverage,Interest coverage,x,9.50,9.50x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2023,2023-12-31,interest_coverage,Interest coverage,x,8.75,8.75x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2024,2024-12-31,interest_coverage,Interest coverage,x,8.00,8.00x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2025,2025-12-31,interest_coverage,Interest coverage,x,7.20,7.20x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,interest_coverage,Interest coverage,x,6.00,6.00x,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2022,2022-12-31,free_cash_flow,Free cash flow,USD m,900,900 USD m,ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2023,2023-12-31,free_cash_flow,Free cash flow,USD m,1000,"1,000 USD m",ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2024,2024-12-31,free_cash_flow,Free cash flow,USD m,1100,"1,100 USD m",ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2025,2025-12-31,free_cash_flow,Free cash flow,USD m,1150,"1,150 USD m",ok,green
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,free_cash_flow,Free cash flow,USD m,1200,"1,200 USD m",ok,green
+BETA,Beta Inc (SAMPLE DATA),2022,2022-06-30,net_debt_to_ebitda,Net debt / EBITDA,x,0.50,0.50x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2023,2023-06-30,net_debt_to_ebitda,Net debt / EBITDA,x,0.40,0.40x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2024,2024-06-30,net_debt_to_ebitda,Net debt / EBITDA,x,,not available: D&A not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2025,2025-06-30,net_debt_to_ebitda,Net debt / EBITDA,x,,not available: D&A not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,net_debt_to_ebitda,Net debt / EBITDA,x,-0.20,-0.20x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2022,2022-06-30,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,0.90,0.90x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2023,2023-06-30,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,0.80,0.80x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2024,2024-06-30,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,,not available: D&A not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2025,2025-06-30,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,,not available: D&A not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,0.30,0.30x,ok,green
+BETA,Beta Inc (SAMPLE DATA),2022,2022-06-30,interest_coverage,Interest coverage,x,,not available: interest expense not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2023,2023-06-30,interest_coverage,Interest coverage,x,,not available: interest expense not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2024,2024-06-30,interest_coverage,Interest coverage,x,,not available: interest expense not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2025,2025-06-30,interest_coverage,Interest coverage,x,,not available: interest expense not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,interest_coverage,Interest coverage,x,,not available: interest expense not reported,not available,
+BETA,Beta Inc (SAMPLE DATA),2022,2022-06-30,free_cash_flow,Free cash flow,USD m,4800,"4,800 USD m",ok,green
+BETA,Beta Inc (SAMPLE DATA),2023,2023-06-30,free_cash_flow,Free cash flow,USD m,5000,"5,000 USD m",ok,green
+BETA,Beta Inc (SAMPLE DATA),2024,2024-06-30,free_cash_flow,Free cash flow,USD m,5300,"5,300 USD m",ok,green
+BETA,Beta Inc (SAMPLE DATA),2025,2025-06-30,free_cash_flow,Free cash flow,USD m,5600,"5,600 USD m",ok,green
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,free_cash_flow,Free cash flow,USD m,6000,"6,000 USD m",ok,green
+GAMA,Gamma Co (SAMPLE DATA),2024,2024-05-31,net_debt_to_ebitda,Net debt / EBITDA,x,3.10,3.10x,ok,orange
+GAMA,Gamma Co (SAMPLE DATA),2025,2025-05-31,net_debt_to_ebitda,Net debt / EBITDA,x,3.60,3.60x,ok,red
+GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,net_debt_to_ebitda,Net debt / EBITDA,x,,not meaningful: EBITDA ≤ 0,not meaningful,
+GAMA,Gamma Co (SAMPLE DATA),2024,2024-05-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,3.80,3.80x,ok,red
+GAMA,Gamma Co (SAMPLE DATA),2025,2025-05-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,4.20,4.20x,ok,red
+GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,net_debt_to_ebitda_incl_leases,Net debt / EBITDA (incl. leases),x,,not meaningful: EBITDA ≤ 0,not meaningful,
+GAMA,Gamma Co (SAMPLE DATA),2024,2024-05-31,interest_coverage,Interest coverage,x,4.20,4.20x,ok,orange
+GAMA,Gamma Co (SAMPLE DATA),2025,2025-05-31,interest_coverage,Interest coverage,x,3.10,3.10x,ok,orange
+GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,interest_coverage,Interest coverage,x,2.50,2.50x,ok,red
+GAMA,Gamma Co (SAMPLE DATA),2024,2024-05-31,free_cash_flow,Free cash flow,USD m,120,120 USD m,ok,green
+GAMA,Gamma Co (SAMPLE DATA),2025,2025-05-31,free_cash_flow,Free cash flow,USD m,-50,-50 USD m,ok,red
+GAMA,Gamma Co (SAMPLE DATA),2026,2026-05-31,free_cash_flow,Free cash flow,USD m,0,0 USD m,ok,green
