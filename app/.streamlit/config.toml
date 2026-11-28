@@ -6,3 +6,10 @@ gatherUsageStats = false
 [server]
 # Only this laptop can open the app (not other devices on the same network).
 address = "localhost"
+
+[theme]
+# docs/product.md: "a bank credit sheet, sober, with a white background". Without this line the page
+# follows the dark mode of the computer.
+base = "light"
+# Buttons and selectors in a neutral dark blue: on the page, red, orange and green mean flags only.
+primaryColor = "#1f4e79"

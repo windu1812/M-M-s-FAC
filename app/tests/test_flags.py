@@ -262,6 +262,10 @@ def test_limits(thresholds, metric, value, unit, expected):
         ("current_ratio", 1.496, "x", "1.50x", "green"),
         ("ebitda_margin", 19.96, "%", "20.0 %", "green"),
         ("ebitda_margin", 19.94, "%", "19.9 %", "orange"),
+        # exact halves are rounded up, as Excel's ROUND (2,406 / 1,200 = 2.005)
+        ("net_debt_to_ebitda", 2406 / 1200, "x", "2.01x", "orange"),
+        ("current_ratio", 1.495, "x", "1.50x", "green"),
+        ("ebitda_margin", 19.95, "%", "20.0 %", "green"),
     ],
 )
 def test_flag_matches_the_rounded_value_shown_on_screen(thresholds, metric, value, unit, shown, expected):
@@ -269,6 +273,22 @@ def test_flag_matches_the_rounded_value_shown_on_screen(thresholds, metric, valu
     # A cell that reads "2.00x" must not be orange when the limit is 2.0.
     flagged = flags.apply_flags(one_row(metric, value, unit), thresholds)
     assert flagged["flag"].iloc[0] == expected, f"shown as {shown}"
+
+
+@pytest.mark.parametrize(
+    "value, unit, expected",
+    [
+        (2406 / 1200, "x", 2.01),  # 2.005: half up (Python's round gives 2.0)
+        (2.675, "x", 2.68),
+        (0.125, "x", 0.13),
+        (2.004, "x", 2.0),
+        (18.25, "%", 18.3),
+        (1234.5, "USD m", 1235.0),
+        (-2.5, "USD m", -3.0),  # away from zero, as Excel's ROUND
+    ],
+)
+def test_shown_value_rounds_half_up_like_excel(value, unit, expected):
+    assert flags.shown_value(value, unit) == expected
 
 
 # --- AC6: thresholds change without code ---------------------------------------------
@@ -410,3 +430,18 @@ def test_calc12_end_to_end_with_compute_ratios(fixtures_dir, thresholds):
     flagged = flags.apply_flags(ratios.compute_ratios(financials), thresholds)
     assert flags.overall_alert(flagged, "SMPL", incl_leases=True).text == "Orange: 1 orange flag"
     assert flags.overall_alert(flagged, "SMPL", incl_leases=False).text == "Orange: 1 orange flag"
+
+
+def test_shown_value_keeps_infinite_and_very_large_values():
+    # never reached with SEC amounts, but the page must not stop on them
+    assert flags.shown_value(float("inf"), "x") == float("inf")
+    assert flags.shown_value(1e26, "x") == 1e26
+    assert flags.shown_value(-1e30, "USD m") == -1e30
+
+
+def test_display_decimals_cover_exactly_the_three_units():
+    from creditlens.ratios import PERCENT, TIMES, USD_M
+
+    assert set(flags.DISPLAY_DECIMALS) == {TIMES, PERCENT, USD_M}
+    with pytest.raises(KeyError):
+        flags.shown_value(2.5, "USD")  # an unknown unit must fail loudly, never be rounded silently

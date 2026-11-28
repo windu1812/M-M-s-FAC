@@ -29,11 +29,15 @@ Rules (docs/acceptance.md, agreed on 2026-11-20):
 
 from __future__ import annotations
 
+import math
 import tomllib
 from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 
 import pandas as pd
+
+from creditlens.ratios import PERCENT, TIMES, USD_M
 
 DEFAULT_THRESHOLDS_PATH = Path(__file__).resolve().parent.parent / "config" / "thresholds.toml"
 
@@ -65,7 +69,7 @@ FLAGGED_RATIOS = [
 DEBT_BASED_RATIOS = ["net_debt_to_ebitda", "debt_to_equity"]
 
 # Decimals shown on screen for each unit (docs/product.md, "Display rounding").
-DISPLAY_DECIMALS = {"x": 2, "%": 1, "USD m": 0}
+DISPLAY_DECIMALS = {TIMES: 2, PERCENT: 1, USD_M: 0}
 
 REQUIRED_COLUMNS = ["ticker", "fiscal_year", "metric", "value", "unit", "status"]
 ALLOWED_KEYS = {"label", "direction", "green", "orange"}
@@ -159,9 +163,27 @@ def _ratio_of(metric: str) -> str | None:
     return None
 
 
+def shown_value(value: float, unit: str) -> float:
+    """The value as it is shown on screen: 2 decimals for x, 1 for %, 0 for USD m.
+
+    Halves are rounded up, away from zero, as Excel's ROUND and an analyst do:
+    2.005 -> 2.01, -2.5 -> -3. Python's round() would give 2.0 (it rounds
+    halves to the even digit, and 2.005 is stored as 2.00499...), so the
+    decimal text of the number is rounded instead. The page (display.py)
+    uses this same function, so a number and its colour always agree.
+    """
+    value = float(value)
+    step = Decimal(1).scaleb(-DISPLAY_DECIMALS[unit])  # 0.01, 0.1 or 1; an unknown unit fails loudly
+    if not math.isfinite(value):
+        return value  # infinite or NaN: nothing to round
+    with localcontext() as context:
+        context.prec = 60  # room for any float, so a very large value never raises
+        return float(Decimal(repr(value)).quantize(step, rounding=ROUND_HALF_UP))
+
+
 def flag_for(value: float, unit: str, rule: dict) -> str:
     """The colour of one value, compared as it is shown on screen."""
-    shown = round(value, DISPLAY_DECIMALS.get(unit, 2))
+    shown = shown_value(value, unit)
     green, orange = rule["green"], rule["orange"]
     if rule["direction"] == LOWER_IS_BETTER:
         if shown <= green:
