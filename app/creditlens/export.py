@@ -28,6 +28,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+from creditlens.flags import FLAGGED_RATIOS
+
 SHEETS = ["Summary", "Ratios", "Financials", "Notes"]
 TITLE_ROW = 1
 SOURCE_ROW = 2
@@ -47,7 +49,8 @@ HEADLINE_METRICS = [
 
 NOT_AVAILABLE_TEXT = "not available"
 NO_YEAR_TEXT = "no data for this fiscal year"
-NO_FLAG_TEXT = "no flag"
+NO_FLAG_TEXT = "n/a"  # a flagged ratio with no value to flag: the same word as the screen
+NOT_FLAGGED_TEXT = "–"  # an amount (EBITDA, total debt, net debt): never flagged, as on the screen
 
 # Excel formats that show the screen rounding (ratios 2 decimals, margin 1, amounts 0).
 NUMBER_FORMATS = {"x": '0.00"x"', "%": '0.0" %"', "USD m": "#,##0"}
@@ -165,7 +168,10 @@ def _write_ratios(sheet, display: pd.DataFrame, sample: bool) -> None:
             r = by_year.loc[year]
             _write_value(sheet, row, col, r["value"], r["text"], r["unit"], r["flag"])
         latest_flag = by_year.loc[by_year.index.max(), "flag"]
-        flag_text = latest_flag if isinstance(latest_flag, str) and latest_flag else NO_FLAG_TEXT
+        if metric.removesuffix(INCL_LEASES) not in FLAGGED_RATIOS:
+            flag_text = NOT_FLAGGED_TEXT
+        else:
+            flag_text = latest_flag if isinstance(latest_flag, str) and latest_flag else NO_FLAG_TEXT
         sheet.cell(row, len(header), flag_text)
         row += 1
 

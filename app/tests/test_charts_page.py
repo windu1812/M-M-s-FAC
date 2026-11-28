@@ -55,7 +55,7 @@ def excel_files(monkeypatch):
 
 def run(tickers: str) -> AppTest:
     at = AppTest.from_file(str(APP_FILE), default_timeout=TIMEOUT).run()
-    at.text_input(key="tickers").input(tickers).run()
+    at.text_input(key="tickers").input(tickers)  # the field is in a form: typed and sent with Run
     at.button(key="run").click().run()
     assert not at.exception, at.exception
     return at
@@ -140,7 +140,7 @@ def test_debt_selector_switches_the_charts_and_keeps_the_chosen_ratio(cache):
     at.radio(key=DEBT_SELECTOR).set_value(True).run()
 
     assert at.selectbox(key=RATIO_SELECTOR).value == "net_debt_to_ebitda"
-    assert bars(at)["axis"] == "Net debt / EBITDA (incl. leases) (x)"
+    assert bars(at)["axis"] == "Net debt / EBITDA, incl. leases (x)"
     assert bars(at)["values"]["ALFA (FY2026)"] == pytest.approx(2.00)  # CALC4b
 
 
@@ -195,6 +195,20 @@ def test_excel_summary_follows_the_debt_selector(cache, excel_files):
     metric_ids = {row[3] for row in workbook["Ratios"].iter_rows(min_row=export.HEADER_ROW + 1,
                                                                    values_only=True)}
     assert {"net_debt_to_ebitda", "net_debt_to_ebitda_incl_leases"} <= metric_ids
+
+
+def test_excel_latest_flag_uses_the_words_of_the_screen(cache, excel_files):
+    """AC9: "Latest flag" in the Ratios sheet reads like the ratio table on the page."""
+    at = run("ALFA, BETA")
+
+    ratios = load_workbook(BytesIO(excel_files[-1]))["Ratios"]
+    header = [cell.value for cell in ratios[export.HEADER_ROW]]
+    latest = {(row[0], row[3]): row[header.index("Latest flag")]
+              for row in ratios.iter_rows(min_row=export.HEADER_ROW + 1, values_only=True)}
+    screen = at.dataframe[0].value.set_index(["Ticker", "Metric"])["Latest flag"]
+    assert latest[("ALFA", "ebitda")] == "–" == screen[("ALFA", "EBITDA")]  # amounts get no flag
+    assert latest[("BETA", "net_debt_to_ebitda")] == "n/a" == screen[("BETA", "Net debt / EBITDA")]  # no D&A
+    assert latest[("ALFA", "debt_to_equity")] == "orange" == screen[("ALFA", "Debt / equity")]  # 1.53x, CALC12
 
 
 def test_excel_file_name_lists_the_companies_shown_and_the_date(cache, monkeypatch):

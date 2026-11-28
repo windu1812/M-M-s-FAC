@@ -37,39 +37,33 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-# --- Names shared with ratios.py and flags.py ------------------------------------
-
-STATUS_OK = "ok"
-STATUS_NOT_AVAILABLE = "not available"
-STATUS_NOT_MEANINGFUL = "not meaningful"
-
-USD_M = "USD m"
-TIMES = "x"
-PERCENT = "%"
-
-INCL_LEASES = "_incl_leases"
-DEBT_BASED_METRICS = ["total_debt", "net_debt", "net_debt_to_ebitda", "debt_to_equity"]
+# Names shared with ratios.py and flags.py: imported, never copied, so they cannot drift apart.
+from creditlens.flags import DISPLAY_DECIMALS, FLAGGED_RATIOS, LOWER_IS_BETTER, shown_value
+from creditlens.ratios import (  # noqa: F401 - re-exported for the page, charts.py and export.py
+    DEBT_BASED_METRICS,
+    INCL_LEASES,
+    METRICS,
+    PERCENT,
+    STATUS_NOT_AVAILABLE,
+    STATUS_NOT_MEANINGFUL,
+    STATUS_OK,
+    TIMES,
+    USD_M,
+)
 
 MAX_TICKERS = 5
 
-# Decimals shown on screen, per unit (docs/product.md, "Rules").
-DECIMALS = {USD_M: 0, TIMES: 2, PERCENT: 1}
+# Fiscal-year columns of the table "Credit ratios, last 5 fiscal years" (AC5).
+TABLE_YEARS = 5
+
+# Decimals shown on screen, per unit (docs/product.md, "Rules"): the same table as flags.py.
+DECIMALS = DISPLAY_DECIMALS
 
 DEBT_DEFINITIONS = {False: "Financial debt only", True: "Including leases and short-term borrowings"}
 
-# The 9 numbers of the ratio table, in the order of docs/product.md. The
+# The 9 numbers of the ratio table, in the order of ratios.METRICS (docs/product.md). The
 # debt-based ones get the INCL_LEASES suffix for the second debt definition.
-TABLE_METRICS = [
-    "ebitda",
-    "total_debt",
-    "net_debt",
-    "net_debt_to_ebitda",
-    "debt_to_equity",
-    "interest_coverage",
-    "current_ratio",
-    "ebitda_margin",
-    "free_cash_flow",
-]
+TABLE_METRICS = [metric for metric in METRICS if not metric.endswith(INCL_LEASES)]
 
 # The three ratios of each summary card (visual 1 of docs/product.md).
 CARD_METRICS = ["net_debt_to_ebitda", "interest_coverage", "current_ratio"]
@@ -85,7 +79,7 @@ METRIC_LABELS = {
     "ebitda_margin": "EBITDA margin",
     "free_cash_flow": "Free cash flow",
 }
-INCL_LEASES_LABEL = " (incl. leases)"
+INCL_LEASES_LABEL = ", incl. leases"  # "Net debt / EBITDA, incl. leases (x)": no double brackets
 
 # The input items of data/xbrl_tags.py, in the order of the 10-K statements.
 ITEM_LABELS = {
@@ -116,9 +110,13 @@ DISPLAY_COLUMNS = ["ticker", "company", "fiscal_year", "period_end", "metric", "
 UNDERLYING_COLUMNS = ["ticker", "company", "fiscal_year", "period_end", "item", "label", "value", "text",
                       "xbrl_tag", "accession", "status"]
 
-# Words of the "Latest flag" column and of the cards: the meaning never depends on colour alone.
-NO_FLAG_TEXT = "no flag"
-NO_YEAR_TEXT = "no data"
+# Words of the "Latest flag" column: the meaning never depends on colour alone.
+NO_FLAG_TEXT = "n/a"  # a flagged ratio with no value to flag ("not available" or "not meaningful")
+NOT_FLAGGED_TEXT = "–"  # an amount (EBITDA, total debt, net debt): never flagged
+NO_YEAR_TEXT = "no data"  # the company has no 10-K figures for that fiscal year
+# Cell colours of the ratio table: light, so the dark text stays readable; the same as the Excel file.
+CELL_COLOURS = {"green": "#C8E6C9", "orange": "#FFE0B2", "red": "#FFCDD2"}
+NOTES_SEPARATOR = " | "  # between the year groups of the "Notes" column ("; " stays inside one reason)
 
 TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
 
@@ -127,21 +125,25 @@ TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
 
 
 def round_value(value: float, unit: str) -> float:
-    """Round a value as it is shown on screen; the same rule as flags.flag_for.
+    """Round a value as it is shown on screen: flags.shown_value, the rule of the flags (halves up).
 
     A value that rounds to zero is written 0, never -0.
     """
-    rounded = round(float(value), DECIMALS[unit])
+    rounded = shown_value(value, unit)
     return 0.0 if rounded == 0 else rounded
 
 
-def format_number(value: float, unit: str) -> str:
-    """The screen text of a number that is already rounded: "1.42x", "20.0 %", "-1,200 USD m"."""
+def format_number(value: float, unit: str, with_unit: bool = True) -> str:
+    """The screen text of a number that is already rounded: "1.42x", "20.0 %", "-1,200 USD m".
+
+    ``with_unit=False`` gives the number alone ("1.42", "20.0", "-1,200"), for the
+    ratio table, whose "Unit" column already gives the unit.
+    """
     if unit == TIMES:
-        return f"{value:,.2f}x"
+        return f"{value:,.2f}" + ("x" if with_unit else "")
     if unit == PERCENT:
-        return f"{value:,.1f} %"
-    return f"{value:,.0f} {USD_M}"
+        return f"{value:,.1f}" + (" %" if with_unit else "")
+    return f"{value:,.0f}" + (f" {USD_M}" if with_unit else "")
 
 
 def missing_text(status: str, reason: str) -> str:
@@ -150,7 +152,7 @@ def missing_text(status: str, reason: str) -> str:
 
 
 def metric_label(metric: str) -> str:
-    """The label of a metric: "Net debt / EBITDA" or "Net debt / EBITDA (incl. leases)"."""
+    """The label of a metric: "Net debt / EBITDA" or "Net debt / EBITDA, incl. leases"."""
     base = metric.removesuffix(INCL_LEASES)
     label = METRIC_LABELS[base]
     return label + INCL_LEASES_LABEL if metric != base else label
@@ -176,7 +178,8 @@ def parse_tickers(raw: str) -> tuple[list[str], str]:
     """Read the ticker field.
 
     Tickers are separated by commas or spaces, written in capitals, and given
-    only once each (in the order typed).
+    only once each (in the order typed). A dot is read as a dash, as in the
+    SEC list: "BRK.B" and "BRK-B" are the same company.
 
     Returns:
         ``(tickers, error)``: the list of tickers and an empty error, or an
@@ -185,7 +188,7 @@ def parse_tickers(raw: str) -> tuple[list[str], str]:
     """
     tickers: list[str] = []
     for part in re.split(r"[,;\s]+", raw or ""):
-        ticker = part.strip().upper()
+        ticker = part.strip().upper().replace(".", "-")
         if ticker and ticker not in tickers:
             tickers.append(ticker)
 
@@ -315,14 +318,19 @@ class Card:
     period_end: str
     alert_level: str  # "green", "orange", "red" or "" (no flag)
     alert_text: str
+    alert_note: str  # what the alert covers: the 6 flagged ratios, of which the card shows 3
     headlines: list[Headline]
 
 
-def change_text(current: pd.Series, previous: pd.Series | None, previous_year: int) -> str:
+def change_text(current: pd.Series, previous: pd.Series | None, previous_year: int,
+                direction: str | None = None) -> str:
     """The change of a value vs the prior fiscal year, computed on the rounded values shown.
 
     Examples: "+0.17x vs FY2025", "-1.5 pt vs FY2025", "+200 USD m vs FY2025".
     No change is computed when either year has no number; the text then says why.
+    With the ``direction`` of the ratio's thresholds ("lower_is_better" or
+    "higher_is_better"), a change that is not zero ends with "(better)" or
+    "(worse)": a fall of Net debt / EBITDA is good, a fall of the current ratio is not.
     """
     if pd.isna(current["value"]):
         return ""  # the card already says why there is no value
@@ -337,10 +345,15 @@ def change_text(current: pd.Series, previous: pd.Series | None, previous_year: i
         number = f"{sign}{change:,.1f} pt"  # a change of a margin is in percentage points
     else:
         number = sign + format_number(change, unit)
-    return f"{number} vs FY{previous_year}"
+    text = f"{number} vs FY{previous_year}"
+    if direction and change != 0:
+        better = change < 0 if direction == LOWER_IS_BETTER else change > 0
+        text += " (better)" if better else " (worse)"
+    return text
 
 
-def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = False) -> Card:
+def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = False,
+                 thresholds: dict | None = None) -> Card:
     """The summary card of one company.
 
     Args:
@@ -348,6 +361,8 @@ def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = 
         ticker: the company.
         alert: its ``flags.overall_alert(...)`` for the same debt definition.
         incl_leases: the selected debt definition.
+        thresholds: the rules of ``flags.load_thresholds()``; with them, each
+            change says "(better)" or "(worse)". None leaves that out.
     """
     company = display[display["ticker"] == ticker]
     if company.empty:
@@ -367,7 +382,7 @@ def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = 
             text=row["text"],
             shown=row["text"] if row["status"] == STATUS_OK else row["status"],
             flag=row["flag"],
-            change=change_text(row, prior, latest_year - 1),
+            change=change_text(row, prior, latest_year - 1, (thresholds or {}).get(base, {}).get("direction")),
             note=row["reason"],
         ))
     first = latest.iloc[0]
@@ -378,6 +393,7 @@ def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = 
         period_end=first["period_end"],
         alert_level=alert.level,
         alert_text=alert.text,
+        alert_note=f"Alert on all {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} (see the table).",
         headlines=headlines,
     )
 
@@ -389,24 +405,104 @@ def _year_column(year: int) -> str:
     return f"FY{year}"
 
 
+def years_text(years: list[int]) -> str:
+    """Fiscal years in a short form, consecutive years as a range.
+
+    [2022, 2023, 2024, 2025] gives "FY2022–FY2025"; [2022, 2024] gives "FY2022, FY2024".
+    """
+    parts, run = [], []
+    for year in sorted(years):
+        if run and year != run[-1] + 1:
+            parts.append(run)
+            run = []
+        run.append(year)
+    if run:
+        parts.append(run)
+    return ", ".join(_year_column(r[0]) if len(r) == 1 else f"{_year_column(r[0])}–{_year_column(r[-1])}"
+                     for r in parts)
+
+
+def table_years(display: pd.DataFrame) -> tuple[list[int], list[int]]:
+    """The fiscal years of the ratio table, and the older years left out of it.
+
+    Year ends differ by company: a September company may already have FY2026
+    while a December one ends at FY2025, so together they cover 6 fiscal
+    years. The table keeps the 5 most recent fiscal years (AC5). Only real
+    years are listed, never a filler year (E11).
+
+    Returns:
+        ``(shown, left_out)``, both oldest first.
+    """
+    years = sorted(int(y) for y in display["fiscal_year"].unique())
+    if not years:
+        return [], []
+    first_shown = years[-1] - TABLE_YEARS + 1
+    return [y for y in years if y >= first_shown], [y for y in years if y < first_shown]
+
+
+def left_out_years_text(display: pd.DataFrame) -> str:
+    """The sentence under the table title when older years are left out, else ""."""
+    _, left_out = table_years(display)
+    if not left_out:
+        return ""
+    return (f"Only the {TABLE_YEARS} most recent fiscal years are shown; "
+            f"left out: {', '.join(_year_column(y) for y in left_out)}.")
+
+
+def _latest_flag_word(metric: str, metric_rows: pd.DataFrame, last_column_year: int) -> str:
+    """The "Latest flag" word of one row: "orange", "n/a" or "–", with the year when it is not the last column."""
+    if metric.removesuffix(INCL_LEASES) not in FLAGGED_RATIOS:
+        return NOT_FLAGGED_TEXT  # amounts are never flagged, so no year either
+    latest_year = int(metric_rows.index.max())
+    word = metric_rows.loc[latest_year, "flag"] or NO_FLAG_TEXT
+    if latest_year != last_column_year:  # this company has no figure in the last column yet
+        word += f" ({_year_column(latest_year)})"
+    return word
+
+
+def cell_style(flag: str) -> str:
+    """The CSS of a ratio-table cell with this flag: its colour, or "" for no flag."""
+    colour = CELL_COLOURS.get(flag)
+    return f"background-color: {colour}; color: #1a1a1a" if colour else ""
+
+
+def table_caption(display: pd.DataFrame, incl_leases: bool = False) -> str:
+    """The text under the title of the ratio table: what its words and colours mean."""
+    caption = (
+        f"Debt definition: {DEBT_DEFINITIONS[incl_leases]}. Values are in the unit of the Unit column; "
+        "cell colours are the flags. \"no data\": no 10-K figures for that fiscal year. "
+        "\"Latest flag\": the flag of the company's latest fiscal year as a word, with the year when it is "
+        "not the last column; \"n/a\": no value to flag; \"–\": amounts are not flagged. "
+        "\"Notes\": why a value is missing, or a part counted as zero. Fiscal year-end dates differ by company."
+    )
+    left_out = left_out_years_text(display)
+    return f"{caption} {left_out}" if left_out else caption
+
+
 def ratio_table(display: pd.DataFrame, incl_leases: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     """The wide ratio table: one row per company and metric, one column per fiscal year.
 
     Only the 9 numbers of the selected debt definition are kept. A cell shows
-    the number ("1.42x") or its status ("not available"); the reasons are
-    written in the "Notes" column with their years, so the cells stay short.
-    A fiscal year that a company does not have shows "no data" (never a filler).
+    the number without its unit ("1.42"; the "Unit" column gives it) or its
+    status ("not available"). The reasons are written once in the "Notes"
+    column with their years ("FY2022–FY2025: D&A not reported"), so the cells
+    stay short. A fiscal year that a company does not have shows "no data"
+    (never a filler). The columns are the 5 most recent fiscal years
+    (:func:`table_years`). "Latest flag" is the flag of the company's latest
+    fiscal year as a word, "n/a" for a ratio with no value and "–" for an
+    amount (never flagged); when that year is not the last column, it is
+    named: "red (FY2025)".
 
     Returns:
         ``(table, flags)``: the table to show, with the columns "Ticker",
-        "Company", "Metric", "Unit", one "FY<year>" column per fiscal year
-        (oldest first), "Latest flag" and "Notes"; and a table of the same
+        "Company", "Metric", "Unit", one "FY<year>" column per shown fiscal
+        year (oldest first), "Latest flag" and "Notes"; and a table of the same
         shape that holds the flag of each fiscal-year cell ("green", "orange",
         "red" or ""), used to colour the cells.
     """
     metrics = [selected_metric(m, incl_leases) for m in TABLE_METRICS]
     rows = display[display["metric"].isin(metrics)]
-    years = sorted(int(y) for y in rows["fiscal_year"].unique())
+    years, _ = table_years(rows)
     year_columns = [_year_column(y) for y in years]
 
     table_rows, flag_rows = [], []
@@ -426,18 +522,15 @@ def ratio_table(display: pd.DataFrame, incl_leases: bool = False) -> tuple[pd.Da
                     continue
                 cell = metric_rows.loc[year]
                 if cell["status"] == STATUS_OK:
-                    row[column] = cell["text"]
-                    note = cell["reason"]
+                    row[column] = format_number(cell["value"], cell["unit"], with_unit=False)
                 else:
-                    row[column] = cell["status"]
-                    note = cell["text"]
+                    row[column] = cell["status"]  # the reason goes to "Notes", not repeated in the cell
                 flags[column] = cell["flag"]
-                if note:
-                    notes.setdefault(note, []).append(year)
-            latest_flag = metric_rows.loc[metric_rows.index.max(), "flag"]
-            row["Latest flag"] = latest_flag or NO_FLAG_TEXT
-            row["Notes"] = "; ".join(
-                f"{', '.join(_year_column(y) for y in note_years)}: {note}" for note, note_years in notes.items()
+                if cell["reason"]:
+                    notes.setdefault(cell["reason"], []).append(year)
+            row["Latest flag"] = _latest_flag_word(metric, metric_rows, years[-1])
+            row["Notes"] = NOTES_SEPARATOR.join(
+                f"{years_text(note_years)}: {note}" for note, note_years in notes.items()
             )
             flags["Latest flag"], flags["Notes"] = "", ""
             table_rows.append(row)

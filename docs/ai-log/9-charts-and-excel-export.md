@@ -55,6 +55,17 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
   the Excel file has its 4 sheets.
 - Not done by the AI: looking at the page in a browser (no browser tool in this session).
 
+### 2026-11-28, after the review of PR #16 (Marc's page)
+- Arthur reviewed Marc's PR #16 with three reviewer agents, then asked Claude to fix every finding on Marc's branch.
+  Merged Marc's updated branch into this one again; resolved the conflicts (page imports, `plan.md`,
+  `architecture.md`, `acceptance.md`) by keeping both sides.
+- Adapted step 6c to Marc's changes: the ticker field is now a form, so the page tests type the tickers and click
+  Run in the same run; the leases label is now ", incl. leases" (axis "Net debt / EBITDA, incl. leases (x)", no
+  double brackets); "Charts" is a section heading like "Summary" and "Credit ratios".
+- `export.py`: the "Latest flag" column of the Ratios sheet now uses the words of the screen ("n/a" for a ratio
+  with no value, "–" for amounts) instead of "no flag" (AC9: the Excel file says what the screen says). A page
+  test compares the two. 358 passed; page run offline on the cached AAPL, MSFT and NKE files without error.
+
 ## Reviewed by the student
 - [x] François read the code and this log (2026-11-26; `comparison_bar_chart`, `trend_line_chart` and `build_excel`
   explained to him function by function).
