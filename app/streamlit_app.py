@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
@@ -44,7 +46,11 @@ DATA_ERRORS = tuple(ERROR_TITLES)
 ALERT_COLOURS = {"green": "green", "orange": "orange", "red": "red", "": "gray"}
 
 TABLE_ROW_HEIGHT = 35  # pixels, so the whole table shows without its own scroll bar
-MIN_CARD_COLUMNS = 3  # 1 to 3 companies get wide cards (short lines); 4 or 5 share the row
+STYLE_FILE = Path(__file__).with_name("style.css")  # the look of the page (fonts, cards, hidden Streamlit controls)
+# Card width in pixels, by number of companies: wide cards for 1 to 3, 5 still fit in one row on a 1280 px laptop.
+# The cards sit in a row that wraps, so a narrower window shows fewer cards per row (responsive).
+CARD_WIDTH = {1: 352, 2: 352, 3: 352, 4: 268, 5: 210}
+PLOTLY_CONFIG = {"displayModeBar": False}  # no Plotly toolbar over the charts
 EMPTY_CELL = "–"  # a cell left empty on purpose (no XBRL tag for an item that is not reported)
 
 
@@ -109,8 +115,9 @@ def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
 # --- Drawing --------------------------------------------------------------------------------
 
 
-def draw_card(card: display.Card) -> None:
-    with st.container(border=True, gap="xsmall"):  # tight lines: the cards fit on the first screen
+def draw_card(card: display.Card, width: int) -> None:
+    # A keyed container: style.css draws it as a grey tile (class st-key-card_<ticker>).
+    with st.container(key=f"card_{card.ticker}", width=width, gap="xsmall"):
         # :small[] keeps the normal text colour (a caption is grey and too pale for required content)
         st.markdown(f"**{escape(card.company)}**  \n"
                     f":small[{card.ticker} · FY{card.fiscal_year}, year ended {card.period_end}]")
@@ -157,6 +164,8 @@ def draw_underlying(underlying: pd.DataFrame) -> None:
 # --- The page ------------------------------------------------------------------------------
 
 st.set_page_config(page_title="CreditLens", layout="wide")
+# The page's own style sheet (a file of the project, no user text in it, so HTML is safe here).
+st.markdown(f"<style>{STYLE_FILE.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
 st.title("CreditLens")
 st.caption("5-year credit screen of US companies, from their 10-K filings on SEC EDGAR.")
@@ -226,9 +235,10 @@ else:
 
         # Summary cards: up to 5 in one row (visual 1).
         st.header("Summary")
-        for column, ticker in zip(st.columns(max(len(alerts), MIN_CARD_COLUMNS)), alerts):
-            with column:
-                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds))
+        with st.container(horizontal=True, wrap=True, gap="small", key="cards"):  # wraps in a narrow window
+            for ticker in alerts:
+                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds),
+                          CARD_WIDTH[len(alerts)])
 
         # Slice 6 (François): the two charts and the "Download Excel" button (visuals 2, 3 and 5).
         # charts.py draws and export.py writes the values of display_tbl; nothing is computed here.
@@ -244,8 +254,9 @@ else:
         if empty_charts:
             st.info(empty_charts)  # an empty chart would look like a bug: say why
         st.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
-                        width="stretch", key="comparison_chart")
-        st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", key="trend_chart")
+                        width="stretch", config=PLOTLY_CONFIG, key="comparison_chart")
+        st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", config=PLOTLY_CONFIG,
+                        key="trend_chart")
 
         today = date.today().isoformat()
         st.download_button(

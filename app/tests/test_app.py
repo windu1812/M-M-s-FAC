@@ -77,7 +77,7 @@ def test_page_starts_and_shows_the_empty_state():
     assert at.title[0].value == "CreditLens"
     assert at.text_input(key="tickers").value == ""
     assert at.button(key="run").label == "Run"
-    assert "AAPL, MSFT, NKE" in at.markdown[0].value
+    assert any("AAPL, MSFT, NKE" in m.value and "Run" in m.value for m in at.markdown)
     assert at.segmented_control(key="incl_leases").value is False  # "Financial debt only" is the default
     assert not at.error
 
@@ -467,8 +467,9 @@ def test_inputs_are_on_one_row(cache):
     """The ticker field, Run and the debt definition sit side by side, so the cards are visible without scrolling."""
     at = start()
 
-    row = at.main.children[2]  # after the title and its caption
-    assert [type(c).__name__ for c in row.children.values()] == ["Column", "Column"]  # st.columns: one row
+    rows = [b for b in at.main.children.values() if [type(c).__name__ for c in getattr(b, "children", {}).values()]
+            == ["Column", "Column"]]  # st.columns: one row
+    row = rows[0]
     keys = [w.key for w in row.get("text_input") + row.get("button") + row.get("button_group")]
     assert keys == ["tickers", "run", "incl_leases"]
 
@@ -490,3 +491,31 @@ def test_progress_box_is_removed_when_every_company_loaded(cache):
 
     assert not at.status
     assert "Results for: **ALFA, BETA**" in page_text(at)
+
+
+# --- Responsive, sober "product page" style without Streamlit's own controls (design of 2026-11-28) ------
+
+
+def test_streamlit_toolbar_and_menu_are_hidden():
+    """No Deploy button and no menu (so no "Record a screencast"): toolbarMode "minimal"."""
+    import tomllib
+
+    config = tomllib.loads((APP_FILE.parent / ".streamlit" / "config.toml").read_text(encoding="utf-8"))
+    assert config["client"]["toolbarMode"] == "minimal"
+
+
+def test_page_loads_its_style_sheet():
+    at = start()
+
+    styles = [m.value for m in at.markdown if m.value.startswith("<style>")]
+    assert any('[data-testid="stHeader"]' in s and "display: none" in s for s in styles)  # the top bar
+    assert any('[data-testid="stElementToolbar"]' in s for s in styles)  # the toolbars over tables
+
+
+def test_cards_flow_in_a_wrapping_row(cache):
+    """Responsive: the cards have a fixed width inside a row that wraps, so a narrow window shows fewer per row."""
+    at = run("ALFA, BETA")
+
+    cards = [b for b in at.main.get("flex_container") if getattr(b.proto.flex_container, "wrap", False)]
+    assert cards, "no wrapping row of cards"
+    assert len(card_lines(at)) == 2

@@ -241,3 +241,10 @@ def test_no_empty_chart_sentence_when_a_company_has_a_value(cache):
     at.selectbox(key=RATIO_SELECTOR).select("interest_coverage").run()
 
     assert not at.info
+
+
+def test_charts_have_no_plotly_toolbar(cache):
+    at = run("ALFA")
+
+    for chart in at.get("plotly_chart"):
+        assert json.loads(chart.proto.config).get("displayModeBar") is False

@@ -1,0 +1,32 @@
+/* CreditLens page style (loaded by streamlit_app.py). Only looks: no number is computed or changed here.
+   Selectors use Streamlit's data-testid attributes and the st-key-<key> class of keyed containers. */
+
+/* The system font of the computer (San Francisco on a Mac), clean and readable. Icons keep their own font. */
+.stApp, .stApp p, .stApp li, .stApp label, .stApp input, .stApp button, .stApp h1, .stApp h2, .stApp h3,
+.stApp [data-testid="stMarkdownContainer"] {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.stApp h1 { letter-spacing: -0.02em; }
+.stApp h2, .stApp h3 { letter-spacing: -0.01em; }
+
+/* Streamlit's own controls: the top bar (running status, file-change notice), its decoration line, the toolbars
+   that appear over tables and charts, and the footer. The page shows only CreditLens. */
+[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"],
+[data-testid="stStatusWidget"], [data-testid="stElementToolbar"], footer {
+    display: none !important;
+}
+
+/* Summary cards: light grey tiles with round corners, no border, all as tall as the tallest in their row. */
+.st-key-cards { align-items: stretch; }
+[class*="st-key-card_"] {
+    background: #f5f5f7;
+    border-radius: 18px;
+    padding: 1.1rem 1.25rem;
+}
+
+/* The page breathes on a large screen and keeps a margin on a small one. */
+[data-testid="stMainBlockContainer"] {
+    max-width: 1280px;
+    padding-left: clamp(1rem, 4vw, 3rem);
+    padding-right: clamp(1rem, 4vw, 3rem);
+}
