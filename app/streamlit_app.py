@@ -47,9 +47,10 @@ ALERT_COLOURS = {"green": "green", "orange": "orange", "red": "red", "": "gray"}
 
 TABLE_ROW_HEIGHT = 35  # pixels, so the whole table shows without its own scroll bar
 STYLE_FILE = Path(__file__).with_name("style.css")  # the look of the page (fonts, cards, hidden Streamlit controls)
-# Card width in pixels, by number of companies: wide cards for 1 to 3, 5 still fit in one row on a 1280 px laptop.
-# The cards sit in a row that wraps, so a narrower window shows fewer cards per row (responsive).
-CARD_WIDTH = {1: 352, 2: 352, 3: 352, 4: 268, 5: 210}
+EXAMPLE_TICKERS = "AAPL, MSFT, NKE"  # the demo companies, kept in the local cache
+# Section headings and their anchors; the links of the top bar (short words, so they fit on a phone) jump to them.
+SECTIONS = {"summary": "Summary", "charts": "Charts", "ratios": "Credit ratios, last 5 fiscal years"}
+NAV_LINKS = {"summary": "Summary", "charts": "Charts", "ratios": "Ratios"}
 PLOTLY_CONFIG = {"displayModeBar": False}  # no Plotly toolbar over the charts
 EMPTY_CELL = "–"  # a cell left empty on purpose (no XBRL tag for an item that is not reported)
 
@@ -115,9 +116,43 @@ def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
 # --- Drawing --------------------------------------------------------------------------------
 
 
-def draw_card(card: display.Card, width: int) -> None:
-    # A keyed container: style.css draws it as a grey tile (class st-key-card_<ticker>).
-    with st.container(key=f"card_{card.ticker}", width=width, gap="xsmall"):
+def top_bar(with_links: bool) -> str:
+    """The fixed bar at the top of the page (fixed text of the project, no user input in it)."""
+    if with_links:
+        right = "".join(f'<a href="#{anchor}" target="_self">{word}</a>' for anchor, word in NAV_LINKS.items())
+    else:
+        right = '<span class="cl-tag">SEC EDGAR · 10-K data</span>'
+    return ('<nav class="cl-nav" aria-label="CreditLens"><div class="cl-brand"><span class="cl-logo" aria-hidden="true">'
+            f'C</span>CreditLens</div><div class="cl-links">{right}</div></nav>')
+
+
+EMPTY_STATE_TILES = (  # what the screen gives, shown before the first run (fixed text, no user input)
+    '<div class="cl-features">'
+    '<div class="cl-feature"><div class="cl-dots" aria-hidden="true"><i style="background:#1e8e3e"></i>'
+    '<i style="background:#c25e00"></i><i style="background:#d70015"></i></div>'
+    "<b>Six credit ratios, flagged</b><span>Leverage, coverage, liquidity, margin and free cash flow, each green, "
+    "orange or red against the agreed limits.</span></div>"
+    '<div class="cl-feature"><div class="cl-dots" aria-hidden="true"><i style="background:#0071e3"></i>'
+    '<i style="background:#5e5ce6"></i></div>'
+    "<b>Five fiscal years, side by side</b><span>Compare up to 5 companies and see how each ratio moved, from the "
+    "10-K filings on SEC EDGAR.</span></div>"
+    '<div class="cl-feature"><div class="cl-dots" aria-hidden="true"><i style="background:#8e8e93"></i></div>'
+    "<b>Every number traceable</b><span>XBRL tag and 10-K accession for each input, and an Excel file with the "
+    "values on screen.</span></div>"
+    "</div>"
+)
+
+
+def use_example() -> None:
+    """The "Try AAPL, MSFT, NKE" button: fill in the tickers and run, before the page is drawn again."""
+    st.session_state["tickers"] = EXAMPLE_TICKERS
+    st.session_state["run_example"] = True
+
+
+def draw_card(card: display.Card) -> None:
+    # A keyed container: style.css draws it as a grey tile with a line of the alert colour on top
+    # (class st-key-card_<level>_<ticker>; the alert word is written on the card too).
+    with st.container(key=f"card_{card.alert_level or 'na'}_{card.ticker}", gap="xsmall"):
         # :small[] keeps the normal text colour (a caption is grey and too pale for required content)
         st.markdown(f"**{escape(card.company)}**  \n"
                     f":small[{card.ticker} · FY{card.fiscal_year}, year ended {card.period_end}]")
@@ -136,6 +171,22 @@ def draw_card(card: display.Card, width: int) -> None:
 def coloured_table(table: pd.DataFrame, colours: pd.DataFrame):
     """The ratio table with each fiscal-year cell in its flag colour (the word is in "Latest flag")."""
     return table.style.apply(lambda _: colours.map(display.cell_style), axis=None)
+
+
+YEAR_COLUMN_WIDTH = 112  # pixels: "not available" fits in a fiscal-year column
+NOTE_CHAR_WIDTH = 7  # pixels per character of a note, about, at the table's font size
+
+
+def ratio_table_columns(table: pd.DataFrame) -> dict:
+    """Column sizes of the ratio table: every fiscal-year cell readable, every note shown in full (the table then
+    scrolls sideways inside its own box), and the ticker and metric kept in view while it scrolls."""
+    longest_note = int(table["Notes"].fillna("").str.len().max() or 0) if "Notes" in table else 0
+    columns = {year: st.column_config.Column(width=YEAR_COLUMN_WIDTH) for year in table.columns
+               if str(year).startswith("FY")}
+    columns["Ticker"] = st.column_config.Column(pinned=True)
+    columns["Metric"] = st.column_config.Column(pinned=True)
+    columns["Notes"] = st.column_config.TextColumn(width=max(400, NOTE_CHAR_WIDTH * longest_note + 32))
+    return columns
 
 
 def draw_underlying(underlying: pd.DataFrame) -> None:
@@ -167,11 +218,18 @@ st.set_page_config(page_title="CreditLens", layout="wide")
 # The page's own style sheet (a file of the project, no user text in it, so HTML is safe here).
 st.markdown(f"<style>{STYLE_FILE.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
-st.title("CreditLens")
-st.caption("5-year credit screen of US companies, from their 10-K filings on SEC EDGAR.")
+nav = st.empty()  # the top bar: its links are added once there are results (below)
+nav.markdown(top_bar(with_links=False), unsafe_allow_html=True)
 
-# One row: the tickers, Run and the debt definition, aligned, so the cards fit on the first screen.
-input_column, debt_column = st.columns([1.4, 1], vertical_alignment="top")  # labels on the same line
+with st.container(key="hero", gap="xxsmall"):
+    st.markdown('<span class="cl-eyebrow">Credit screen</span>', unsafe_allow_html=True)
+    st.title("CreditLens", anchor=False)
+    st.caption("5-year credit screen of US companies, from their 10-K filings on SEC EDGAR.")
+
+# The search panel, one row: the tickers, Run and the debt definition, aligned, so the cards fit on the first
+# screen. In a narrow window (phone) the columns go one under the other.
+search = st.container(key="search")
+input_column, debt_column = search.columns([1.1, 1], vertical_alignment="top")  # labels on the same line
 with input_column:
     # A form, so that Enter in the field runs the screen like the Run button does.
     with st.form("ticker_form", border=False):
@@ -179,7 +237,7 @@ with input_column:
         with field_column:
             st.text_input(
                 "Tickers (1 to 5 US companies, separated by commas)",
-                placeholder="AAPL, MSFT, NKE",
+                placeholder=EXAMPLE_TICKERS,
                 key="tickers",
             )
         with run_column:
@@ -196,6 +254,7 @@ with debt_column:  # outside the form: switching it redraws at once, without Run
         help="Including leases and short-term borrowings adds commercial paper and lease liabilities to debt.",
     )
 
+run_clicked = run_clicked or st.session_state.pop("run_example", False)  # the example button
 if run_clicked:
     tickers, input_error = display.parse_tickers(st.session_state["tickers"])
     if input_error:
@@ -208,8 +267,12 @@ result = st.session_state.get("result")
 
 if result is None:
     if not run_clicked:
-        st.markdown("Enter 1 to 5 US tickers, for example **AAPL, MSFT, NKE**, then click **Run** "
-                    "(or press Enter).")
+        with st.container(horizontal=True, vertical_alignment="center", gap="small", key="empty_state"):
+            st.markdown("Enter 1 to 5 US tickers, for example **AAPL, MSFT, NKE**, then click **Run** "
+                        "(or press Enter).", width="content")
+            st.button(f"Try {EXAMPLE_TICKERS}", on_click=use_example, key="example", type="tertiary",
+                      icon=":material/arrow_forward:")
+        st.markdown(EMPTY_STATE_TILES, unsafe_allow_html=True)
 else:
     # Two small lines under the inputs: what the results are, and where the data comes from (E7).
     with st.container(gap="xxsmall"):
@@ -233,33 +296,39 @@ else:
         underlying = display.underlying_table(financials)
         alerts = {t: flags.overall_alert(flagged, t, incl_leases) for t in result["financials"]}
 
+        nav.markdown(top_bar(with_links=True), unsafe_allow_html=True)
+
         # Summary cards: up to 5 in one row (visual 1).
-        st.header("Summary")
-        with st.container(horizontal=True, wrap=True, gap="small", key="cards"):  # wraps in a narrow window
+        st.header(SECTIONS["summary"], anchor="summary")
+        # The cards share the row and wrap in a narrower window (style.css: about 16 rem each).
+        with st.container(horizontal=True, wrap=True, gap="small", key="cards"):
             for ticker in alerts:
-                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds),
-                          CARD_WIDTH[len(alerts)])
+                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds))
 
         # Slice 6 (François): the two charts and the "Download Excel" button (visuals 2, 3 and 5).
         # charts.py draws and export.py writes the values of display_tbl; nothing is computed here.
-        st.header("Charts")
-        chart_ratio = st.selectbox(
+        st.header(SECTIONS["charts"], anchor="charts")
+        panel = st.container(key="panel_charts")
+        tools = panel.container(horizontal=True, wrap=True, gap="small", key="chart_tools")  # selector and Excel
+        chart_ratio = tools.selectbox(
             "Ratio shown in the charts",
             options=charts.CHART_RATIOS,
             format_func=display.metric_label,
             key="chart_ratio",
+            width=320,
         )
         chart_metric = display.selected_metric(chart_ratio, incl_leases)  # follows the debt definition
         empty_charts = charts.no_value_text(display_tbl, chart_metric)
         if empty_charts:
-            st.info(empty_charts)  # an empty chart would look like a bug: say why
-        st.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
-                        width="stretch", config=PLOTLY_CONFIG, key="comparison_chart")
-        st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", config=PLOTLY_CONFIG,
-                        key="trend_chart")
+            panel.info(empty_charts)  # an empty chart would look like a bug: say why
+        # One under the other, full width: side by side, the "n/a (not drawn)" notes under the charts were cut off.
+        panel.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
+                           width="stretch", config=PLOTLY_CONFIG, key="comparison_chart")
+        panel.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", config=PLOTLY_CONFIG,
+                           key="trend_chart")
 
         today = date.today().isoformat()
-        st.download_button(
+        tools.download_button(
             "Download Excel",
             data=export.build_excel(
                 display_tbl,
@@ -274,24 +343,28 @@ else:
             on_click="ignore",  # downloading does not redraw the page
             key="download_excel",
             help="Sheets Summary, Ratios (both debt definitions), Financials and Notes, with the values on screen.",
+            icon=":material/download:",
         )
 
         # Table "Credit ratios, last 5 fiscal years" (visual 4).
-        st.header("Credit ratios, last 5 fiscal years")
-        st.caption(display.table_caption(display_tbl, incl_leases))
+        st.header(SECTIONS["ratios"], anchor="ratios")
+        table_panel = st.container(key="panel_table")
+        table_panel.caption(display.table_caption(display_tbl, incl_leases))
         table, colours = display.ratio_table(display_tbl, incl_leases)
-        st.dataframe(
+        table_panel.dataframe(
             coloured_table(table, colours),
             hide_index=True,
             width="stretch",
             height=TABLE_ROW_HEIGHT * (len(table) + 1) + 3,
             column_order=[c for c in table.columns if c != "Company"],  # the cards give the names
-            column_config={"Notes": st.column_config.TextColumn(width="large")},
+            column_config=ratio_table_columns(table),
             key="ratio_table",
         )
 
-        with st.expander("View underlying data"):
+        with table_panel.expander("View underlying data", icon=":material/table_view:"):
             st.caption("Input figures from the 10-K, in USD m, with the XBRL tag and the 10-K accession number.")
             draw_underlying(underlying)
 
-st.caption("Source: SEC EDGAR XBRL company facts (free public data).")
+with st.container(key="footer"):
+    st.markdown('<div class="cl-footer"></div>', unsafe_allow_html=True)
+    st.caption("Source: SEC EDGAR XBRL company facts (free public data).")

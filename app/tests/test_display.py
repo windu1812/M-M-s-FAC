@@ -267,8 +267,9 @@ def test_card_switches_with_the_debt_definition(alfa_beta):
 def test_card_with_missing_ratios_counts_them(alfa_beta):
     _, flagged, table = alfa_beta
     card = display.summary_card(table, "BETA", flags.overall_alert(flagged, "BETA"))
-    # red: current ratio 0.80 and FCF -150; not available: ND/EBITDA, coverage, margin
-    assert (card.alert_level, card.alert_text) == ("red", "Red: 2 red flags, 3 not available")
+    # red: current ratio 0.80 and FCF -150; not available: ND/EBITDA, coverage, margin.
+    # 3 of 6 not available: "N/A", the company is not rated (team decision 2026-11-28); the flags are still counted.
+    assert (card.alert_level, card.alert_text) == ("", "N/A: 3 not available, 2 red flags, 1 green flag")
     ndebitda, coverage, current = card.headlines
     assert ndebitda.text == "not available: D&A not reported" and ndebitda.flag == ""
     assert (ndebitda.shown, ndebitda.note, ndebitda.change) == ("not available", "D&A not reported", "")

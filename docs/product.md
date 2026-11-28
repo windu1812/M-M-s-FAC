@@ -21,10 +21,15 @@ Status: agreed on 2026-11-20 (Arthur, for the team)
 
 ## Screens and visuals
 
-Look: one dashboard page with summary cards, charts and a table. Used on a phone: **no** (laptop only).
+Look: one dashboard page with summary cards, charts and a table. Made for a laptop; on a phone (390 px) the page
+adapts (one card per row, inputs one under the other), and the wide table scrolls inside its own box.
 Layout (agreed on 2026-11-28): the ticker field, Run and the debt definition (two buttons) on one aligned row;
 "Results for" and the cache date in small text under it; then the summary cards, visible without scrolling on a
-1280 × 800 laptop screen.
+1280 × 800 laptop screen. Modern look (agreed on 2026-11-28, Arthur): a fixed frosted top bar with links to the
+sections, a hero title that gets small once there are results, the inputs in one white panel, cards with a line of
+their alert colour on top (the alert word is always written), the charts and the table in white panels, small
+rise-in and hover effects (off when the computer asks for less motion), and on the first visit three tiles saying
+what the screen gives and a "Try AAPL, MSFT, NKE" link.
 Visual reference: a bank credit sheet. It is sober, with a white background and a dense table, and colour is used
 only for the flags.
 

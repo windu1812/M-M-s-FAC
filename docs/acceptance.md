@@ -14,7 +14,7 @@ Each criterion is checkable: a starting state, an action and an expected result.
 | AC5 | F2 | A run with 1 to 5 companies | The user looks at the ratio table | Each company has 9 rows for the selected debt definition (EBITDA, total debt, net debt and the 6 ratios), 5 fiscal-year columns and a unit on every row | ratios part passing (test: `test_each_debt_version_has_the_9_numbers_with_a_unit`); the table on the page passing (tests: `test_ratio_table_has_9_rows_per_company_and_one_column_per_year`, `test_ratio_table_has_9_rows_per_company_with_units_and_flag_words`); 5 columns when year ends differ (tests: `test_ratio_table_keeps_the_5_most_recent_years_when_year_ends_differ`, `test_ratio_table_shows_5_years_when_year_ends_differ_and_says_which_are_left_out`, 2026-11-28) |
 | AC5b | F2 | A run with 3 companies, "Financial debt only" selected | The user selects "Including leases and short-term borrowings" | Total debt, net debt, Net debt / EBITDA and Debt / equity change in the cards, charts, flags and table; the other ratios do not change. The Excel Ratios sheet holds both versions | cards and table passing (tests: `test_debt_selector_switches_cards_and_table_without_downloading_again`, `test_ratio_table_switches_only_the_debt_based_rows`, `test_card_switches_with_the_debt_definition`); charts and Excel passing (tests: `test_debt_selector_switches_the_charts_and_keeps_the_chosen_ratio`, `test_excel_summary_follows_the_debt_selector`); the alert of the card switches too (tests: `test_alert_changes_with_the_debt_definition`, `test_alert_on_the_card_switches_with_the_debt_definition`) |
 | AC6 | F3 | The app shows AAPL with a red flag on current ratio | The team changes the current ratio limits in `thresholds.toml` and runs again | The flag changes, without any code change | flags part passing (test: `test_ac6_changing_the_file_changes_the_flag`); the page passing (test: `test_ac6_changing_the_thresholds_file_changes_the_flag_on_the_page`, 2026-11-28) |
-| AC7 | F3 | A run with 3 companies | The user looks at the cards | Each card shows the overall alert as a word and a colour, and counts the "not available" ratios | alert part passing (tests: `test_calc12_overall_alert_is_orange`, `test_overall_alert_red_counts_not_available_and_not_meaningful`); the card on the page passing (tests: `test_cards_show_the_ratios_changes_and_overall_alert`, `test_card_with_missing_ratios_counts_them`) |
+| AC7 | F3 | A run with 3 companies | The user looks at the cards | Each card shows the overall alert as a word and a colour, and counts the "not available" ratios | alert part passing (tests: `test_calc12_overall_alert_is_orange`, `test_overall_alert_na_counts_not_available_and_not_meaningful`, CALC16); the card on the page passing (tests: `test_cards_show_the_ratios_changes_and_overall_alert`, `test_card_with_missing_ratios_counts_them`) |
 | AC8 | F4 | A run with 3 companies | The user picks "Interest coverage" in the ratio selector | Both charts switch to interest coverage; a missing value is shown as "n/a", never as 0 | passing (test: `test_picking_interest_coverage_switches_both_charts_and_missing_is_never_zero`); page run on the cached SEC files of AAPL, MSFT and NKE (2026-11-28): every ratio, both debt definitions, missing values n/a, never 0. Look at the page: pending; when no company has a value, a sentence says why the charts are empty (test: `test_a_ratio_no_company_has_says_why_the_charts_are_empty`) |
 | AC9 | F5 | A run with 3 companies | The user clicks "Download Excel" | An `.xlsx` file downloads with the sheets Summary, Ratios, Financials and Notes; its values equal those on the screen | passing (tests: `test_download_excel_button_gives_the_four_sheets_with_the_screen_values`, `test_excel_summary_follows_the_debt_selector`, `test_export.py`); file built from the page for AAPL, MSFT and NKE (2026-11-28): 4 sheets, 39 ratio rows. Downloaded file opened in Excel: pending; "Latest flag" words equal to the screen (test: `test_excel_latest_flag_uses_the_words_of_the_screen`) |
 
@@ -22,7 +22,7 @@ Each criterion is checkable: a starting state, an action and an expected result.
 
 | Id | Screen / state | Expected | Test | Browser check | Looked at by |
 |---|---|---|---|---|---|
-| V1 | Dashboard, 5 companies, 1280 px laptop width | 5 cards in one row, no sideways scrolling, table readable, every axis and card shows its unit | – | not run (project check not installed) | screenshots at 1280 px with 5 SAMPLE DATA companies looked at by Claude on 2026-11-27 (cards and table; charts: slice 6); Marc's look pending; compact layout of 2026-11-28 looked at by Claude on screenshots at 1280 × 800, 1366 × 768, 1000 × 600 and 390 px with AAPL, MSFT, NKE (cards fully visible from 1280 × 800, no text cut off), plus the empty and error states; Arthur's look pending |
+| V1 | Dashboard, 5 companies, 1280 px laptop width | 5 cards in one row, no sideways scrolling, table readable, every axis and card shows its unit | – | not run (project check not installed) | screenshots at 1280 px with 5 SAMPLE DATA companies looked at by Claude on 2026-11-27 (cards and table; charts: slice 6); Marc's look pending; compact layout of 2026-11-28 looked at by Claude on screenshots at 1280 × 800, 1366 × 768, 1000 × 600 and 390 px with AAPL, MSFT, NKE (cards fully visible from 1280 × 800, no text cut off), plus the empty and error states; Arthur's look pending; modern design of 2026-11-28 looked at by Claude at 1440 × 900, 1280 × 800, 1000 × 700 and 390 px: 5 SAMPLE DATA cards in one row at 1280 px, AAPL, MSFT, NKE cards fully visible at 1280 × 800, every note of the ratio table readable (NKE, after scrolling the table sideways), no sideways page scrolling at 390 px; Arthur's look pending |
 | V2 | Dashboard, empty (first visit) | Instruction and example tickers, no error | passing (test: `test_page_starts_and_shows_the_empty_state`) | not run | screenshot looked at by Claude on 2026-11-27; Marc's look pending |
 | V3 | Dashboard, one ticker in error | Error message for that ticker only, the other companies still shown | passing (tests: `test_unknown_ticker_shows_an_error_and_the_other_company_is_shown`, `test_company_without_10k_shows_its_message`, `test_sec_unreachable_without_cache_shows_a_message_for_that_ticker`) | not run | screenshot looked at by Claude on 2026-11-27; Marc's look pending; several failing tickers, an unexpected error and a data problem each stop only their ticker (tests: `test_several_failing_tickers_each_get_their_message_and_the_others_are_shown`, `test_an_unexpected_problem_stops_only_its_own_ticker`, `test_data_problem_stops_only_its_ticker`) |
 
@@ -82,12 +82,20 @@ limit takes the better colour.
 | EBITDA margin | higher is better | ≥ 20 % | ≥ 10 % | < 10 % |
 | Free cash flow | higher is better | ≥ 0 | – | < 0 |
 
-**Overall alert (agreed on 2026-11-20):**
-- red if at least one ratio is red;
+**Overall alert (agreed on 2026-11-20; "N/A" rule added by the team on 2026-11-28):**
+- "N/A" if 3 or more of the 6 flagged ratios are "not available": the company cannot be rated (NKE);
+- otherwise red if at least one ratio is red;
 - otherwise orange if at least one is orange;
 - otherwise green.
 
-"Not available" ratios do not count as red, but the card shows how many there are.
+With 1 or 2 "not available", the alert is rated on the other ratios. "Not available" ratios do not count as red, but
+the card shows how many there are; an "N/A" alert still counts the flags that exist ("N/A: 3 not available, 3 green
+flags"). "Not meaningful" does not count as "not available".
+
+CALC16 (rule above, flags of ratios that are all green when available): 2 not available → "Green: 4 green flags,
+2 not available"; 3 not available → "N/A: 3 not available, 3 green flags"; 2 not available and 1 not meaningful →
+"Green: 3 green flags, 2 not available, 1 not meaningful" (tests: `test_overall_alert_one_or_two_not_available_keep_the_rule`,
+`test_overall_alert_three_not_available_is_na`, `test_overall_alert_not_meaningful_does_not_count_as_not_available`).
 
 **Known answers of the SAMPLE DATA companies (dashboard tests).** Fictional companies of
 `app/tests/synthetic_company.py`, worked out by hand (USD m). The example company above is ALFA's FY2026; the other

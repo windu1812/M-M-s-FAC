@@ -75,5 +75,5 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
 ## Reviewed by the student
 - [x] François read the code and this log (2026-11-26; `comparison_bar_chart`, `trend_line_chart` and `build_excel`
   explained to him function by function).
-- [ ] François read the step 6c lines of `app/streamlit_app.py` and `app/tests/test_charts_page.py`, and can
+- [x] François read the step 6c lines of `app/streamlit_app.py` and `app/tests/test_charts_page.py`, and can
   explain them (to do before the merge).

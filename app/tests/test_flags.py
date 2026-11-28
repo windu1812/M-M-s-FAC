@@ -343,12 +343,13 @@ def test_file_that_is_not_toml_gives_a_clear_error(tmp_path):
 # --- overall_alert -------------------------------------------------------------------
 
 
-def test_overall_alert_red_counts_not_available_and_not_meaningful(sample, thresholds):
+def test_overall_alert_na_counts_not_available_and_not_meaningful(sample, thresholds):
     flagged = flags.apply_flags(sample, thresholds)
     alert = flags.overall_alert(flagged, "GAPS")
     # ND/EBITDA, coverage, margin not available; D/E not meaningful; current ratio and FCF red
-    assert alert.level == "red"
-    assert alert.text == "Red: 2 red flags, 3 not available, 1 not meaningful"
+    # 3 of the 6 not available: too many to rate the company (team decision 2026-11-28), but the counts stay.
+    assert alert.level == ""
+    assert alert.text == "N/A: 3 not available, 2 red flags, 1 not meaningful"
     assert (alert.red, alert.not_available, alert.not_meaningful) == (2, 3, 1)
 
 
@@ -389,7 +390,50 @@ def test_overall_alert_without_any_flag_is_not_green(thresholds):
     )
     alert = flags.overall_alert(flags.apply_flags(rows, thresholds), "ONE")
     assert alert.level == ""
-    assert alert.text == "No flag: 6 not available"
+    assert alert.text == "N/A: 6 not available"
+
+
+# Green values of the 6 flagged ratios (thresholds.toml): ND/EBITDA 1.0 <= 2.0, D/E 0.5 <= 1.0,
+# coverage 10.0 >= 6.0, current ratio 2.0 >= 1.5, margin 25.0 >= 20.0, FCF 100 >= 0.
+GREEN_VALUES = {
+    "net_debt_to_ebitda": (1.0, "x"), "debt_to_equity": (0.5, "x"), "interest_coverage": (10.0, "x"),
+    "current_ratio": (2.0, "x"), "ebitda_margin": (25.0, "%"), "free_cash_flow": (100.0, "USD m"),
+}
+
+
+def company_with(statuses: dict) -> pd.DataFrame:
+    """Company ONE, FY2026: the 6 flagged ratios green, except the ones given a status ("not available"...)."""
+    rows = []
+    for metric, (value, unit) in GREEN_VALUES.items():
+        status = statuses.get(metric, "ok")
+        rows.append(one_row(metric, value if status == "ok" else math.nan, unit, status))
+    return pd.concat(rows, ignore_index=True)
+
+
+def test_overall_alert_one_or_two_not_available_keep_the_rule(thresholds):
+    """Team decision 2026-11-28: with 1 or 2 ratios not available, the alert is rated as usual."""
+    two_missing = company_with({"interest_coverage": "not available", "ebitda_margin": "not available"})
+    alert = flags.overall_alert(flags.apply_flags(two_missing, thresholds), "ONE")
+    assert alert.level == "green"
+    assert alert.text == "Green: 4 green flags, 2 not available"
+
+
+def test_overall_alert_three_not_available_is_na(thresholds):
+    """Team decision 2026-11-28: 3 or more of the 6 not available -> "N/A", the company cannot be rated (NKE)."""
+    three_missing = company_with({metric: "not available" for metric in
+                                  ["net_debt_to_ebitda", "interest_coverage", "ebitda_margin"]})
+    alert = flags.overall_alert(flags.apply_flags(three_missing, thresholds), "ONE")
+    assert alert.level == ""
+    assert alert.text == "N/A: 3 not available, 3 green flags"
+    assert (alert.green, alert.not_available) == (3, 3)
+
+
+def test_overall_alert_not_meaningful_does_not_count_as_not_available(thresholds):
+    statuses = {"net_debt_to_ebitda": "not available", "interest_coverage": "not available",
+                "debt_to_equity": "not meaningful"}
+    alert = flags.overall_alert(flags.apply_flags(company_with(statuses), thresholds), "ONE")
+    assert alert.level == "green"
+    assert alert.text == "Green: 3 green flags, 2 not available, 1 not meaningful"
 
 
 def test_overall_alert_unknown_ticker(sample, thresholds):
