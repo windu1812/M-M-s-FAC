@@ -334,7 +334,7 @@ def test_cards_explain_the_alert_and_say_better_or_worse(cache):
 def test_page_has_section_headings(cache):
     at = run("ALFA")
 
-    assert [h.value for h in at.header] == ["Summary", "Credit ratios, last 5 fiscal years"]
+    assert [h.value for h in at.header] == ["Summary", "Charts", "Credit ratios, last 5 fiscal years"]
 
 
 def test_underlying_data_marks_items_not_reported(cache):

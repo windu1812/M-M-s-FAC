@@ -12,18 +12,19 @@ Journey (docs/product.md): type 1 to 5 tickers, click Run, read the summary
 cards, the ratio table and the underlying data. The debt definition selector
 switches every debt-based number without downloading again.
 
-The charts and the "Download Excel" button (slice 6, François) go in the place
+The charts and the "Download Excel" button (slice 6, François) are in the part
 marked "Slice 6" below; they read ``display_tbl``, ``underlying``, ``alerts``
 and ``thresholds``.
 """
 
 from __future__ import annotations
 
+from datetime import date
 
 import pandas as pd
 import streamlit as st
 
-from creditlens import display, flags
+from creditlens import charts, display, export, flags
 from creditlens.data import financials as fin
 from creditlens.data import sec_client
 from creditlens.ratios import compute_ratios
@@ -217,7 +218,40 @@ else:
         for saved, cached in result["cache_dates"].items():
             st.caption(f"Data from SEC EDGAR, saved in the local cache on {saved} ({', '.join(cached)}).")
 
-        # Slice 6 (François): the two charts and the "Download Excel" button go here.
+        # Slice 6 (François): the two charts and the "Download Excel" button (visuals 2, 3 and 5).
+        # charts.py draws and export.py writes the values of display_tbl; nothing is computed here.
+        st.header("Charts")
+        chart_ratio = st.selectbox(
+            "Ratio shown in the charts",
+            options=charts.CHART_RATIOS,
+            format_func=display.metric_label,
+            key="chart_ratio",
+        )
+        chart_metric = display.selected_metric(chart_ratio, incl_leases)  # follows the debt definition
+        empty_charts = charts.no_value_text(display_tbl, chart_metric)
+        if empty_charts:
+            st.info(empty_charts)  # an empty chart would look like a bug: say why
+        st.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
+                        width="stretch", key="comparison_chart")
+        st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", key="trend_chart")
+
+        today = date.today().isoformat()
+        st.download_button(
+            "Download Excel",
+            data=export.build_excel(
+                display_tbl,
+                underlying,
+                {ticker: alert.text for ticker, alert in alerts.items()},
+                generated_on=today,
+                incl_leases=incl_leases,
+                thresholds=thresholds,
+            ),
+            file_name=export.excel_filename(list(alerts), today),
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            on_click="ignore",  # downloading does not redraw the page
+            key="download_excel",
+            help="Sheets Summary, Ratios (both debt definitions), Financials and Notes, with the values on screen.",
+        )
 
         # Table "Credit ratios, last 5 fiscal years" (visual 4).
         st.header("Credit ratios, last 5 fiscal years")
