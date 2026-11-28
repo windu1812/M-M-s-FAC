@@ -66,6 +66,12 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
   with no value, "–" for amounts) instead of "no flag" (AC9: the Excel file says what the screen says). A page
   test compares the two. 358 passed; page run offline on the cached AAPL, MSFT and NKE files without error.
 
+- Later the same day, Arthur looked at the page in his browser with NKE alone and asked why the charts had no
+  point. Not a bug: NKE reports no operating income, so Net debt / EBITDA is "not available" every year and nothing
+  is drawn (the rule: never a made-up number). But an empty chart with a 0-4 scale looks broken, so
+  `charts.no_value_text(display, metric)` (new) gives the page a sentence saying why, and to choose another ratio.
+  4 tests written first; 372 passed.
+
 ## Reviewed by the student
 - [x] François read the code and this log (2026-11-26; `comparison_bar_chart`, `trend_line_chart` and `build_excel`
   explained to him function by function).

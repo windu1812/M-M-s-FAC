@@ -228,6 +228,9 @@ else:
             key="chart_ratio",
         )
         chart_metric = display.selected_metric(chart_ratio, incl_leases)  # follows the debt definition
+        empty_charts = charts.no_value_text(display_tbl, chart_metric)
+        if empty_charts:
+            st.info(empty_charts)  # an empty chart would look like a bug: say why
         st.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
                         width="stretch", key="comparison_chart")
         st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", key="trend_chart")

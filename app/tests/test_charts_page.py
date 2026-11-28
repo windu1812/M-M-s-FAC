@@ -224,3 +224,20 @@ def test_excel_file_name_lists_the_companies_shown_and_the_date(cache, monkeypat
     run("ALFA, NOPE, BETA")  # NOPE is not a known ticker: it is not in the file
 
     assert names[-1] == f"CreditLens_ALFA_BETA_{date.today().isoformat()}.xlsx"
+
+
+def test_a_ratio_no_company_has_says_why_the_charts_are_empty(cache):
+    at = run("BETA")  # BETA reports no interest expense: no interest coverage in any year
+
+    at.selectbox(key=RATIO_SELECTOR).select("interest_coverage").run()
+
+    assert any(i.value.startswith("No company shown has a value for Interest coverage") for i in at.info)
+    assert len(figures(at)) == 2  # the charts stay, with the "n/a" reasons
+
+
+def test_no_empty_chart_sentence_when_a_company_has_a_value(cache):
+    at = run("ALFA, BETA")
+
+    at.selectbox(key=RATIO_SELECTOR).select("interest_coverage").run()
+
+    assert not at.info

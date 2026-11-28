@@ -74,6 +74,16 @@ def _rows_for(display: pd.DataFrame, metric: str) -> pd.DataFrame:
     return rows
 
 
+def no_value_text(display: pd.DataFrame, metric: str) -> str:
+    """A sentence for the page when no company has a number for ``metric``: both charts would be empty
+    (for example NKE alone with Net debt / EBITDA, as NKE reports no operating income). "" otherwise."""
+    rows = _rows_for(display, metric)
+    if rows["value"].notna().any():
+        return ""
+    return (f"No company shown has a value for {rows.iloc[0]['label']}, so there is no bar or point to draw: "
+            "the reasons are written under each chart. To compare the companies, choose another ratio.")
+
+
 def _number(value) -> float | None:
     """The value to draw, or None when there is no number (never 0)."""
     return None if pd.isna(value) else float(value)

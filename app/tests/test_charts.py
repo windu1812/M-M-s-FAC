@@ -227,3 +227,17 @@ def test_real_zero_is_drawn_as_a_point(display):
 def test_sample_data_mark_only_when_asked(display, build):
     assert "SAMPLE DATA" in annotation_texts(build(display, "net_debt_to_ebitda", sample=True))
     assert "SAMPLE DATA" not in annotation_texts(build(display, "net_debt_to_ebitda"))
+
+
+# --- An empty chart says why (seen in the browser on 2026-11-28: NKE alone, Net debt / EBITDA) ------------
+
+
+def test_empty_charts_get_a_sentence_saying_why(display):
+    only_beta = display[display["ticker"] == "BETA"]  # BETA reports no interest expense in any year
+    text = charts.no_value_text(only_beta, "interest_coverage")
+    assert text.startswith("No company shown has a value for Interest coverage")
+    assert "choose another ratio" in text
+
+
+def test_no_sentence_when_one_company_has_a_value(display):
+    assert charts.no_value_text(display, "interest_coverage") == ""  # ALFA has interest coverage
