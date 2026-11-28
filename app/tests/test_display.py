@@ -54,16 +54,38 @@ def cell(table, ticker, year, metric):
         (-1234.6, "USD m", "-1,235 USD m"),
         (0.0, "USD m", "0 USD m"),  # a real zero is shown
         (-0.0004, "x", "0.00x"),  # never "-0.00x"
+        (2.675, "x", "2.68x"),  # halves are rounded up, as Excel's ROUND
+        (18.25, "%", "18.3 %"),
+        (1234.5, "USD m", "1,235 USD m"),
+        (-2.5, "USD m", "-3 USD m"),  # away from zero
     ],
 )
 def test_screen_text_of_a_number(value, unit, expected):
     assert display.format_number(display.round_value(value, unit), unit) == expected
 
 
-def test_rounding_is_the_same_as_the_flags():
-    # flags.flag_for compares round(value, 2) for "x": the display must show that same number.
-    for value in [1.995, 2.004999, 2.005, 3.4949, 0.125]:
-        assert display.round_value(value, "x") == round(value, flags.DISPLAY_DECIMALS["x"])
+@pytest.mark.parametrize("unit", ["x", "%", "USD m"])
+def test_rounding_is_the_same_as_the_flags(unit):
+    # One rounding rule for the screen and the flags (flags.shown_value), for every unit.
+    for value in [1.995, 2.004999, 2.005, 3.4949, 0.125, 18.25, 1234.5, -2.5]:
+        assert display.round_value(value, unit) == flags.shown_value(value, unit)
+
+
+@pytest.mark.parametrize(
+    "value, text, flag",
+    [
+        (2404.8 / 1200, "2.00x", "green"),  # 2.004 -> 2.00, on the green limit (<= 2.0)
+        (2406 / 1200, "2.01x", "orange"),  # 2.005 -> 2.01 (half up, as Excel), above 2.0
+        (2407.2 / 1200, "2.01x", "orange"),  # 2.006 -> 2.01
+    ],
+)
+def test_text_and_flag_agree_on_the_limit(value, text, flag):
+    ratios = pd.DataFrame([{"ticker": "EDGE", "fiscal_year": 2026, "period_end": pd.Timestamp("2026-12-31"),
+                            "metric": "net_debt_to_ebitda", "value": value, "unit": "x", "status": "ok",
+                            "reason": ""}])
+    names = pd.DataFrame({"ticker": ["EDGE"], "company": ["Edge Inc (SAMPLE DATA)"]})
+    shown = display.display_table(flags.apply_flags(ratios), names)
+    assert (shown["text"].iloc[0], shown["flag"].iloc[0]) == (text, flag)
 
 
 def test_missing_text_says_why():

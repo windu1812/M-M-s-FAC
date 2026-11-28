@@ -37,7 +37,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from creditlens.flags import FLAGGED_RATIOS, LOWER_IS_BETTER
+from creditlens.flags import DISPLAY_DECIMALS, FLAGGED_RATIOS, LOWER_IS_BETTER, shown_value
 
 # --- Names shared with ratios.py and flags.py ------------------------------------
 
@@ -57,8 +57,8 @@ MAX_TICKERS = 5
 # Fiscal-year columns of the table "Credit ratios, last 5 fiscal years" (AC5).
 TABLE_YEARS = 5
 
-# Decimals shown on screen, per unit (docs/product.md, "Rules").
-DECIMALS = {USD_M: 0, TIMES: 2, PERCENT: 1}
+# Decimals shown on screen, per unit (docs/product.md, "Rules"): the same table as flags.py.
+DECIMALS = DISPLAY_DECIMALS
 
 DEBT_DEFINITIONS = {False: "Financial debt only", True: "Including leases and short-term borrowings"}
 
@@ -134,11 +134,11 @@ TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
 
 
 def round_value(value: float, unit: str) -> float:
-    """Round a value as it is shown on screen; the same rule as flags.flag_for.
+    """Round a value as it is shown on screen: flags.shown_value, the rule of the flags (halves up).
 
     A value that rounds to zero is written 0, never -0.
     """
-    rounded = round(float(value), DECIMALS[unit])
+    rounded = shown_value(value, unit)
     return 0.0 if rounded == 0 else rounded
 
 

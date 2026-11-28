@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import tomllib
 from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import pandas as pd
@@ -159,9 +160,22 @@ def _ratio_of(metric: str) -> str | None:
     return None
 
 
+def shown_value(value: float, unit: str) -> float:
+    """The value as it is shown on screen: 2 decimals for x, 1 for %, 0 for USD m.
+
+    Halves are rounded up, away from zero, as Excel's ROUND and an analyst do:
+    2.005 -> 2.01, -2.5 -> -3. Python's round() would give 2.0 (it rounds
+    halves to the even digit, and 2.005 is stored as 2.00499...), so the
+    decimal text of the number is rounded instead. The page (display.py)
+    uses this same function, so a number and its colour always agree.
+    """
+    step = Decimal(1).scaleb(-DISPLAY_DECIMALS.get(unit, 2))  # 0.01, 0.1 or 1
+    return float(Decimal(repr(float(value))).quantize(step, rounding=ROUND_HALF_UP))
+
+
 def flag_for(value: float, unit: str, rule: dict) -> str:
     """The colour of one value, compared as it is shown on screen."""
-    shown = round(value, DISPLAY_DECIMALS.get(unit, 2))
+    shown = shown_value(value, unit)
     green, orange = rule["green"], rule["orange"]
     if rule["direction"] == LOWER_IS_BETTER:
         if shown <= green:
