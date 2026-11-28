@@ -558,3 +558,34 @@ def test_no_prior_fiscal_year_gives_no_change(ticker):
     _, flagged, table = pipeline(ticker)
     card = display.summary_card(table, ticker, flags.overall_alert(flagged, ticker))
     assert [h.change for h in card.headlines] == ["no change shown: no FY2025 data"] * 3
+
+
+
+# --- Second review round of PR #16 ---------------------------------------------------------------
+
+
+def one_ratio_per_year(ticker, years):
+    nan = math.nan
+    return [(ticker, y, "current_ratio", "x", 1.5, "1.50x", "ok", "green", "") for y in years] + [
+        (ticker, y, "ebitda", "USD m", nan, "not available: D&A not reported", "not available", "", "D&A not reported")
+        for y in years]
+
+
+def test_table_shows_the_5_most_recent_years_present_even_with_a_gap():
+    table = display_rows(one_ratio_per_year("GAPS", [2021, 2022, 2024, 2025, 2026]))  # no FY2023
+    assert display.table_years(table) == ([2021, 2022, 2024, 2025, 2026], [])
+    wide, _ = display.ratio_table(table)
+    assert [c for c in wide.columns if c.startswith("FY")] == ["FY2021", "FY2022", "FY2024", "FY2025", "FY2026"]
+
+
+def test_caption_names_a_company_with_no_year_in_the_table():
+    table = display_rows(one_ratio_per_year("OLDC", range(2015, 2020)) + one_ratio_per_year("NEWC", range(2022, 2027)))
+    caption = display.table_caption(table)
+    assert "left out: FY2015–FY2019" in caption
+    assert "OLDC has no fiscal year in this table (latest: FY2019)." in caption
+
+
+def test_grouped_errors_keep_each_message():
+    errors = {"A": ("Ticker not found", "m1"), "B": ("Ticker not found", "m2"), "C": ("Ticker not found", "m1")}
+    assert display.grouped_errors(errors) == [(["A", "C"], "Ticker not found", "m1"),
+                                              (["B"], "Ticker not found", "m2")]

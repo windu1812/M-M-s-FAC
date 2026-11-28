@@ -112,6 +112,14 @@ Marc asked Claude to do the whole slice (decision log of `docs/architecture.md`,
 - A damaged-cache test used a 13-digit CIK file name; the test failed for that reason, not for the code. Fixed to the
   10-digit name.
 
+### Second review round (2026-11-28)
+- The code and test reviewers re-read only the fix commits. No blocker or major finding; 11 minor ones, all fixed with
+  their tests (321 passed). Among them, a mistake of the first fix: it kept a 5-year calendar window
+  (`[latest - 4, latest]`), while the decision written at the same time said "the 5 most recent fiscal years
+  present", so a missing year made a real year disappear. The code now follows the decision.
+- Another one: the broad `except Exception` added for the page also turned the tests' "no internet" block into a red
+  box, so a test that reached the internet could pass. The page-test helper now refuses an "Unexpected problem" box.
+
 ### What remains for people
 - Marc: read the fixes (`display.py`, the page, the tests, `docs/acceptance.md`) before merging PR #16.
 - Arthur or Marc: look at the page at 1280 px with AAPL, MSFT and NKE, in both debt definitions (long notes, cards).

@@ -33,13 +33,19 @@ def start() -> AppTest:
     return AppTest.from_file(str(APP_FILE), default_timeout=TIMEOUT).run()
 
 
-def run(tickers: str, at: AppTest | None = None) -> AppTest:
+def run(tickers: str, at: AppTest | None = None, allow_unexpected: bool = False) -> AppTest:
     """Type the tickers and click Run. The field is in a form: as in the browser, what is typed is
-    sent only when the form is submitted (Run or Enter), so both happen in the same run."""
+    sent only when the form is submitted (Run or Enter), so both happen in the same run.
+
+    The page turns any unexpected error into an "Unexpected problem" box for its ticker; a test would
+    then pass silently (even the "no internet in tests" block). So it is refused unless allowed.
+    """
     at = at or start()
     at.text_input(key="tickers").input(tickers)
     at.button(key="run").click().run()
     assert not at.exception, at.exception
+    if not allow_unexpected:
+        assert not any("Unexpected problem" in e for e in errors(at)), errors(at)
     return at
 
 
@@ -225,7 +231,7 @@ def test_an_unexpected_problem_stops_only_its_own_ticker(cache, monkeypatch):
         return real_get_financials(ticker, *args, **kwargs)
 
     monkeypatch.setattr(fin, "get_financials", broken_for_beta)
-    at = run("ALFA, BETA")
+    at = run("ALFA, BETA", allow_unexpected=True)
 
     assert len(at.error) == 1
     assert "BETA: Unexpected problem." in at.error[0].value and "KeyError" in at.error[0].value
@@ -270,6 +276,7 @@ def test_results_say_which_tickers_they_belong_to(cache):
 
     at.text_input(key="tickers").input("BETA").run()  # typed, but Run not clicked (nor Enter)
 
+    assert at.session_state["tickers"] == "ALFA"  # the form sends what is typed only on Run or Enter
     assert "Results for: **ALFA**" in page_text(at)  # the shown results still say what they are
     assert "Alfa Corp (SAMPLE DATA)" in page_text(at)
 
@@ -416,3 +423,37 @@ def test_not_meaningful_is_shown_on_the_card_and_in_the_table(cache):
     assert "Net debt / EBITDA (x)  \n**not meaningful**" in page_text(at)
     nega = table(at, "ratio_table").set_index("Metric")
     assert nega.loc["Debt / equity", "FY2026"] == "not meaningful"
+
+
+
+# --- Second review round of PR #16 ---------------------------------------------------------------
+
+
+class FakeNotFound:
+    """The SEC's answer when it has no such file (HTTP 404)."""
+
+    status_code = 404
+
+    def raise_for_status(self):
+        raise requests.HTTPError("404 Not Found", response=self)
+
+
+def test_table_cells_are_coloured_on_the_page(cache):
+    at = run("BETA")  # current ratio 0.80x and free cash flow -150: red
+
+    assert "#FFCDD2" in str(at.dataframe[0].proto)  # the red of display.CELL_COLOURS
+
+
+def test_company_without_xbrl_data_gets_its_own_title(cache, monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: FakeNotFound())
+    at = run("NCCH, ALFA")  # NCCH is in the ticker list; its file is not cached and the SEC answers 404
+
+    assert "NCCH: No financial data on SEC EDGAR." in at.error[0].value
+    assert card_lines(at) == ["ALFA · FY2026, year ended 2026-12-31"]
+
+
+def test_cache_date_lists_only_the_companies_shown(cache):
+    at = run("FRGN, ALFA")  # FRGN's file is cached, but FRGN files no 10-K
+
+    saved = [c.value for c in at.caption if "saved in the local cache" in c.value]
+    assert saved and all(line.endswith("(ALFA).") for line in saved)

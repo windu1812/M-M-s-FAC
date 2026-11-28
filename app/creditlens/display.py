@@ -427,8 +427,8 @@ def table_years(display: pd.DataFrame) -> tuple[list[int], list[int]]:
 
     Year ends differ by company: a September company may already have FY2026
     while a December one ends at FY2025, so together they cover 6 fiscal
-    years. The table keeps the 5 most recent fiscal years (AC5). Only real
-    years are listed, never a filler year (E11).
+    years. The table keeps the 5 most recent fiscal years present (AC5); a
+    year that no company has is skipped, never filled (E11).
 
     Returns:
         ``(shown, left_out)``, both oldest first.
@@ -436,17 +436,20 @@ def table_years(display: pd.DataFrame) -> tuple[list[int], list[int]]:
     years = sorted(int(y) for y in display["fiscal_year"].unique())
     if not years:
         return [], []
-    first_shown = years[-1] - TABLE_YEARS + 1
-    return [y for y in years if y >= first_shown], [y for y in years if y < first_shown]
+    return years[-TABLE_YEARS:], years[:-TABLE_YEARS]
 
 
 def left_out_years_text(display: pd.DataFrame) -> str:
     """The sentence under the table title when older years are left out, else ""."""
-    _, left_out = table_years(display)
+    shown, left_out = table_years(display)
     if not left_out:
         return ""
-    return (f"Only the {TABLE_YEARS} most recent fiscal years are shown; "
-            f"left out: {', '.join(_year_column(y) for y in left_out)}.")
+    text = f"Only the {TABLE_YEARS} most recent fiscal years are shown; left out: {years_text(left_out)}."
+    latest = display.groupby("ticker", sort=False)["fiscal_year"].max()
+    for ticker, year in latest.items():
+        if int(year) < shown[0]:  # all its rows would read "no data": say why
+            text += f" {ticker} has no fiscal year in this table (latest: {_year_column(int(year))})."
+    return text
 
 
 def _latest_flag_word(metric: str, metric_rows: pd.DataFrame, last_column_year: int) -> str:
@@ -458,6 +461,15 @@ def _latest_flag_word(metric: str, metric_rows: pd.DataFrame, last_column_year: 
     if latest_year != last_column_year:  # this company has no figure in the last column yet
         word += f" ({_year_column(latest_year)})"
     return word
+
+
+def grouped_errors(errors: dict[str, tuple[str, str]]) -> list[tuple[list[str], str, str]]:
+    """The error boxes to show: tickers with the same title and the same message share one box (for example
+    "Settings missing" for every ticker); a different message gets its own box. The order is kept."""
+    groups: dict[tuple[str, str], list[str]] = {}
+    for ticker, (title, message) in errors.items():
+        groups.setdefault((title, message), []).append(ticker)
+    return [(tickers, title, message) for (title, message), tickers in groups.items()]
 
 
 def cell_style(flag: str) -> str:

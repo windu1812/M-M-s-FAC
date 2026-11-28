@@ -147,8 +147,9 @@ def fetch_json(url: str, cache_file: Path, refresh: bool = False) -> dict:
         response.raise_for_status()
         data = response.json()
     except requests.RequestException as error:
+        # A 404 on a company file means the SEC has no XBRL data for it; on the ticker list it is an outage.
         if isinstance(error, requests.HTTPError) and error.response is not None \
-                and error.response.status_code == 404:
+                and error.response.status_code == 404 and "/companyfacts/" in url:
             raise NoFinancialDataError(
                 f"SEC EDGAR has no XBRL financial data for this company ({urlparse(url).netloc} answered "
                 "HTTP 404). It may be a fund, or a company that files no financial statements in XBRL."

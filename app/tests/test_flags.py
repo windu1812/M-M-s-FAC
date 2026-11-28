@@ -430,3 +430,18 @@ def test_calc12_end_to_end_with_compute_ratios(fixtures_dir, thresholds):
     flagged = flags.apply_flags(ratios.compute_ratios(financials), thresholds)
     assert flags.overall_alert(flagged, "SMPL", incl_leases=True).text == "Orange: 1 orange flag"
     assert flags.overall_alert(flagged, "SMPL", incl_leases=False).text == "Orange: 1 orange flag"
+
+
+def test_shown_value_keeps_infinite_and_very_large_values():
+    # never reached with SEC amounts, but the page must not stop on them
+    assert flags.shown_value(float("inf"), "x") == float("inf")
+    assert flags.shown_value(1e26, "x") == 1e26
+    assert flags.shown_value(-1e30, "USD m") == -1e30
+
+
+def test_display_decimals_cover_exactly_the_three_units():
+    from creditlens.ratios import PERCENT, TIMES, USD_M
+
+    assert set(flags.DISPLAY_DECIMALS) == {TIMES, PERCENT, USD_M}
+    with pytest.raises(KeyError):
+        flags.shown_value(2.5, "USD")  # an unknown unit must fail loudly, never be rounded silently
