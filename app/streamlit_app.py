@@ -19,7 +19,6 @@ and ``thresholds``.
 
 from __future__ import annotations
 
-from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -102,15 +101,12 @@ def grouped_errors(errors: dict[str, tuple[str, str]]) -> list[tuple[list[str], 
 
 
 def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
-    """Date each company file was saved in the local cache -> tickers (E7)."""
+    """Date each company file was saved in the local cache -> tickers (E7); read by the data part."""
     dates: dict[str, list[str]] = {}
     for ticker in tickers:
-        try:
-            path = sec_client.CACHE_DIR / f"CIK{sec_client.get_cik(ticker)}.json"
-            saved = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d")
-        except (OSError, *DATA_ERRORS):
-            continue
-        dates.setdefault(saved, []).append(ticker)
+        saved = sec_client.cache_saved_on(ticker)
+        if saved:
+            dates.setdefault(saved, []).append(ticker)
     return dates
 
 

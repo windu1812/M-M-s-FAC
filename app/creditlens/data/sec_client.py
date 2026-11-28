@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Callable
 from urllib.parse import urlparse
@@ -221,4 +222,26 @@ def get_company_facts(cik: str, refresh: bool = False) -> dict:
     if not (len(cik) == 10 and cik.isdigit()):
         raise ValueError(f"CIK must have exactly 10 digits, got '{cik}'.")
     url = COMPANY_FACTS_URL.format(cik=cik)
-    return fetch_json(url, CACHE_DIR / f"CIK{cik}.json", refresh)
+    return fetch_json(url, company_facts_file(cik), refresh)
+
+
+def company_facts_file(cik: str) -> Path:
+    """The cache file of a company's "companyfacts" JSON."""
+    return CACHE_DIR / f"CIK{cik}.json"
+
+
+def cache_saved_on(ticker: str) -> str | None:
+    """The date ("YYYY-MM-DD") the company file of ``ticker`` was saved in the cache (E7).
+
+    Reads the cache only, never downloads: None when the ticker list or the
+    company file is not cached, or when the ticker is not in the list.
+    """
+    if not (CACHE_DIR / "company_tickers.json").exists():
+        return None
+    try:
+        path = company_facts_file(get_cik(ticker))
+    except (TickerNotFoundError, CacheFileError):
+        return None
+    if not path.exists():
+        return None
+    return datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d")

@@ -37,20 +37,19 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+# Names shared with ratios.py and flags.py: imported, never copied, so they cannot drift apart.
 from creditlens.flags import DISPLAY_DECIMALS, FLAGGED_RATIOS, LOWER_IS_BETTER, shown_value
-
-# --- Names shared with ratios.py and flags.py ------------------------------------
-
-STATUS_OK = "ok"
-STATUS_NOT_AVAILABLE = "not available"
-STATUS_NOT_MEANINGFUL = "not meaningful"
-
-USD_M = "USD m"
-TIMES = "x"
-PERCENT = "%"
-
-INCL_LEASES = "_incl_leases"
-DEBT_BASED_METRICS = ["total_debt", "net_debt", "net_debt_to_ebitda", "debt_to_equity"]
+from creditlens.ratios import (  # noqa: F401 - re-exported for the page, charts.py and export.py
+    DEBT_BASED_METRICS,
+    INCL_LEASES,
+    METRICS,
+    PERCENT,
+    STATUS_NOT_AVAILABLE,
+    STATUS_NOT_MEANINGFUL,
+    STATUS_OK,
+    TIMES,
+    USD_M,
+)
 
 MAX_TICKERS = 5
 
@@ -62,19 +61,9 @@ DECIMALS = DISPLAY_DECIMALS
 
 DEBT_DEFINITIONS = {False: "Financial debt only", True: "Including leases and short-term borrowings"}
 
-# The 9 numbers of the ratio table, in the order of docs/product.md. The
+# The 9 numbers of the ratio table, in the order of ratios.METRICS (docs/product.md). The
 # debt-based ones get the INCL_LEASES suffix for the second debt definition.
-TABLE_METRICS = [
-    "ebitda",
-    "total_debt",
-    "net_debt",
-    "net_debt_to_ebitda",
-    "debt_to_equity",
-    "interest_coverage",
-    "current_ratio",
-    "ebitda_margin",
-    "free_cash_flow",
-]
+TABLE_METRICS = [metric for metric in METRICS if not metric.endswith(INCL_LEASES)]
 
 # The three ratios of each summary card (visual 1 of docs/product.md).
 CARD_METRICS = ["net_debt_to_ebitda", "interest_coverage", "current_ratio"]

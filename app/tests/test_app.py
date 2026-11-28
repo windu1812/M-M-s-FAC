@@ -338,3 +338,23 @@ def test_underlying_data_marks_items_not_reported(cache):
     row = da_2024.iloc[0]  # ALFA does not report D&A in FY2024
     assert row["Status"] == "not reported" and pd.isna(row["Value (USD m)"])  # empty, never 0
     assert row["XBRL tag"] == "–" and row["10-K accession"] == "–"
+
+
+def test_ac6_changing_the_thresholds_file_changes_the_flag_on_the_page(cache, monkeypatch, tmp_path):
+    from creditlens import flags
+
+    before = run("BETA")  # current ratio 2,400 / 3,000 = 0.80x: red with the agreed limits (< 1.0)
+    beta = table(before, "ratio_table").set_index("Metric")
+    assert beta.loc["Current ratio", "Latest flag"] == "red"
+
+    agreed = flags.DEFAULT_THRESHOLDS_PATH.read_text(encoding="utf-8")
+    old = 'label = "Current ratio"\ndirection = "higher_is_better"\ngreen = 1.5\norange = 1.0'
+    assert old in agreed
+    looser = tmp_path / "thresholds.toml"
+    looser.write_text(agreed.replace(old, old.replace("green = 1.5", "green = 0.8").replace(
+        "orange = 1.0", "orange = 0.5")), encoding="utf-8")
+    monkeypatch.setattr(flags, "DEFAULT_THRESHOLDS_PATH", looser)  # the file changed, not the code
+
+    after = run("BETA")
+    beta = table(after, "ratio_table").set_index("Metric")
+    assert beta.loc["Current ratio", "Latest flag"] == "green"  # 0.80 >= 0.8

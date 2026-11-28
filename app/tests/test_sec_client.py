@@ -275,6 +275,20 @@ def test_get_cik_unknown_ticker_raises(tickers_in_cache):
         sec_client.get_cik("ZZZZ")
 
 
+def test_cache_saved_on_gives_the_date_of_the_cached_company_file(tickers_in_cache):
+    import os
+    from datetime import datetime
+
+    path = sec_client.CACHE_DIR / "CIK0000320193.json"  # AAPL in the sample ticker list
+    path.write_text("{}", encoding="utf-8")
+    saved = datetime(2026, 11, 20, 18, 49).timestamp()
+    os.utime(path, (saved, saved))
+
+    assert sec_client.cache_saved_on("AAPL") == "2026-11-20"
+    assert sec_client.cache_saved_on("MSFT") is None  # in the list, but its file is not cached
+    assert sec_client.cache_saved_on("ZZZZ") is None  # not in the list
+
+
 def test_unknown_ticker_message_gives_a_next_step(tickers_in_cache):
     with pytest.raises(sec_client.TickerNotFoundError, match="Check the spelling"):
         sec_client.get_cik("ZZZZ")
