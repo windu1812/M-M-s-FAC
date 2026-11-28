@@ -22,4 +22,4 @@ Local branch `design/apple-style`, from `design/compact-top`. Tool: Claude Code 
   unsafe_allow_html=True)`, which works; the test now checks that form.
 
 ## What the human decided or checked
-- *To do:* Arthur looks at the page (restart the app: the theme is read at start) and validates before any push.
+- Arthur looked at the page and validated it ("c'est bon, commit et push"); merged with PR #18 on 2026-11-28.
