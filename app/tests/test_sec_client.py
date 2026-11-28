@@ -236,9 +236,23 @@ def test_fetch_json_404_says_the_sec_has_no_financial_data(monkeypatch, tmp_path
     )
     cache_file = tmp_path / "x.json"
 
+    url = "https://data.sec.gov/api/xbrl/companyfacts/CIK0000000001.json"
     with pytest.raises(sec_client.NoFinancialDataError, match="no XBRL financial data"):
-        sec_client.fetch_json("https://data.sec.gov/x.json", cache_file)
+        sec_client.fetch_json(url, cache_file)
     assert not cache_file.exists()
+
+
+def test_404_on_the_ticker_list_is_an_outage_not_missing_company_data(monkeypatch, tmp_path, fast_rate_limiter):
+    monkeypatch.setattr(
+        sec_client.requests, "get", lambda url, headers, timeout: FakeErrorResponse(404)
+    )
+    with pytest.raises(sec_client.SecUnavailableError, match="HTTP status 404"):
+        sec_client.fetch_json(sec_client.TICKERS_URL, tmp_path / "company_tickers.json")
+
+
+def test_cache_saved_on_never_downloads():
+    # empty cache: the conftest internet block would raise if the function tried to download the ticker list
+    assert sec_client.cache_saved_on("AAPL") is None
 
 
 def test_damaged_cache_file_raises_a_message_that_says_what_to_delete(tmp_path):

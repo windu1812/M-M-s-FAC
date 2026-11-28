@@ -29,12 +29,15 @@ Rules (docs/acceptance.md, agreed on 2026-11-20):
 
 from __future__ import annotations
 
+import math
 import tomllib
 from dataclasses import dataclass
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 
 import pandas as pd
+
+from creditlens.ratios import PERCENT, TIMES, USD_M
 
 DEFAULT_THRESHOLDS_PATH = Path(__file__).resolve().parent.parent / "config" / "thresholds.toml"
 
@@ -66,7 +69,7 @@ FLAGGED_RATIOS = [
 DEBT_BASED_RATIOS = ["net_debt_to_ebitda", "debt_to_equity"]
 
 # Decimals shown on screen for each unit (docs/product.md, "Display rounding").
-DISPLAY_DECIMALS = {"x": 2, "%": 1, "USD m": 0}
+DISPLAY_DECIMALS = {TIMES: 2, PERCENT: 1, USD_M: 0}
 
 REQUIRED_COLUMNS = ["ticker", "fiscal_year", "metric", "value", "unit", "status"]
 ALLOWED_KEYS = {"label", "direction", "green", "orange"}
@@ -169,8 +172,13 @@ def shown_value(value: float, unit: str) -> float:
     decimal text of the number is rounded instead. The page (display.py)
     uses this same function, so a number and its colour always agree.
     """
-    step = Decimal(1).scaleb(-DISPLAY_DECIMALS.get(unit, 2))  # 0.01, 0.1 or 1
-    return float(Decimal(repr(float(value))).quantize(step, rounding=ROUND_HALF_UP))
+    value = float(value)
+    step = Decimal(1).scaleb(-DISPLAY_DECIMALS[unit])  # 0.01, 0.1 or 1; an unknown unit fails loudly
+    if not math.isfinite(value):
+        return value  # infinite or NaN: nothing to round
+    with localcontext() as context:
+        context.prec = 60  # room for any float, so a very large value never raises
+        return float(Decimal(repr(value)).quantize(step, rounding=ROUND_HALF_UP))
 
 
 def flag_for(value: float, unit: str, rule: dict) -> str:

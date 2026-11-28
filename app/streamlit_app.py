@@ -91,14 +91,6 @@ def fetch(tickers: list[str]) -> dict:
     return {"tickers": tickers, "financials": data, "errors": errors, "cache_dates": cache_dates(list(data))}
 
 
-def grouped_errors(errors: dict[str, tuple[str, str]]) -> list[tuple[list[str], str, str]]:
-    """The errors to show: tickers with the same title and message share one box (for example "Settings
-    missing" for every ticker). Order of the first ticker is kept."""
-    groups: dict[tuple[str, str], list[str]] = {}
-    for ticker, (title, message) in errors.items():
-        groups.setdefault((title, message), []).append(ticker)
-    return [(tickers, title, message) for (title, message), tickers in groups.items()]
-
 
 def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
     """Date each company file was saved in the local cache -> tickers (E7); read by the data part."""
@@ -201,7 +193,7 @@ if result is None:
 else:
     st.markdown(f"Results for: **{escape(', '.join(result['tickers']))}** "
                 "(change the tickers and click Run to update)")
-    for tickers, title, message in grouped_errors(result["errors"]):
+    for tickers, title, message in display.grouped_errors(result["errors"]):
         st.error(f"**{escape(', '.join(tickers))}: {escape(title)}.** {escape(message)}")
 
     if result["financials"]:
