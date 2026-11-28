@@ -8,6 +8,7 @@ test_display.py and docs/acceptance.md (example company = ALFA FY2026).
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 import requests
 from streamlit.testing.v1 import AppTest
@@ -124,7 +125,7 @@ def test_ratio_table_has_9_rows_per_company_with_units_and_flag_words(cache):
     assert len(ratios) == 2 * 9  # AC5
     assert list(ratios.columns[4:7]) == ["FY2024", "FY2025", "FY2026"]  # only real years (E11)
     alfa = ratios[ratios["Ticker"] == "ALFA"].set_index("Metric")
-    assert alfa.loc["Debt / equity", "FY2026"] == "1.53x"
+    assert alfa.loc["Debt / equity", "FY2026"] == "1.53"
     assert alfa.loc["Debt / equity", "Latest flag"] == "orange"
     assert ratios["Unit"].isin(["USD m", "x", "%"]).all()
 
@@ -146,7 +147,8 @@ def test_underlying_data_shows_tags_and_accession_numbers(cache):
 
     underlying = table(at, "underlying_table")
     revenue = underlying[(underlying["Fiscal year"] == 2026) & (underlying["Item"] == "Revenue")].iloc[0]
-    assert revenue["Value (USD m)"] == "6,000 USD m"
+    assert revenue["Value (USD m)"] == 6000  # a number: the column sorts and aligns as numbers
+    assert revenue["Status"] == "reported"
     assert revenue["XBRL tag"] == "Revenues"
     assert revenue["10-K accession"] == "0001111111-26-000003"
     assert "View underlying data" in [e.label for e in at.expander]
@@ -173,14 +175,14 @@ def test_debt_selector_switches_cards_and_table_without_downloading_again(cache,
 
     after = table(at, "ratio_table").set_index("Metric")
     # 2,000 + 300 + 200 + 400 + 100 = 3,000 (CALC2b); 2,400 / 1,200 = 2.00 (CALC4b); 3,000 / 1,500 = 2.00 (CALC5b)
-    assert after.loc["Total debt (incl. leases)", "FY2026"] == "3,000 USD m"
-    assert after.loc["Net debt / EBITDA (incl. leases)", "FY2026"] == "2.00x"
-    assert after.loc["Debt / equity (incl. leases)", "FY2026"] == "2.00x"
+    assert after.loc["Total debt, incl. leases", "FY2026"] == "3,000"
+    assert after.loc["Net debt / EBITDA, incl. leases", "FY2026"] == "2.00"
+    assert after.loc["Debt / equity, incl. leases", "FY2026"] == "2.00"
     # the other ratios do not change
     for metric in ["EBITDA", "Interest coverage", "Current ratio", "EBITDA margin", "Free cash flow"]:
         assert after.loc[metric, "FY2026"] == before.loc[metric, "FY2026"]
     text = page_text(at)
-    assert "Net debt / EBITDA (incl. leases) (x)  \n**2.00x**" in text  # the card switched too
+    assert "Net debt / EBITDA, incl. leases (x)  \n**2.00x**" in text  # the card switched too, with its unit
     assert "Including leases and short-term borrowings" in text
     assert calls == []  # only the stored result is redrawn
 
@@ -309,3 +311,30 @@ def test_wrong_thresholds_file_stops_with_a_readable_message(cache, monkeypatch,
 
     assert any("The flag thresholds cannot be read." in e for e in errors(at))
     assert not at.dataframe
+
+
+# --- Readability (review of PR #16) -----------------------------------------------------------------
+
+
+def test_cards_explain_the_alert_and_say_better_or_worse(cache):
+    at = run("ALFA")
+
+    text = page_text(at)
+    assert "Alert on all 6 flagged ratios of FY2026 (see the table)." in text
+    assert "-0.22x vs FY2025 (better)" in text  # Net debt / EBITDA 1.42 - 1.64, lower is better
+
+
+def test_page_has_section_headings(cache):
+    at = run("ALFA")
+
+    assert [h.value for h in at.header] == ["Summary", "Credit ratios, last 5 fiscal years"]
+
+
+def test_underlying_data_marks_items_not_reported(cache):
+    at = run("ALFA")
+
+    underlying = table(at, "underlying_table")
+    da_2024 = underlying[(underlying["Fiscal year"] == 2024) & (underlying["Item"] == "D&A")]
+    row = da_2024.iloc[0]  # ALFA does not report D&A in FY2024
+    assert row["Status"] == "not reported" and pd.isna(row["Value (USD m)"])  # empty, never 0
+    assert row["XBRL tag"] == "–" and row["10-K accession"] == "–"

@@ -74,7 +74,7 @@ def test_missing_text_says_why():
 
 def test_labels_of_both_debt_definitions():
     assert display.metric_label("net_debt_to_ebitda") == "Net debt / EBITDA"
-    assert display.metric_label("net_debt_to_ebitda_incl_leases") == "Net debt / EBITDA (incl. leases)"
+    assert display.metric_label("net_debt_to_ebitda_incl_leases") == "Net debt / EBITDA, incl. leases"
     assert display.selected_metric("debt_to_equity", True) == "debt_to_equity_incl_leases"
     assert display.selected_metric("interest_coverage", True) == "interest_coverage"  # not debt-based
 
@@ -237,7 +237,7 @@ def test_card_switches_with_the_debt_definition(alfa_beta):
     ndebitda, coverage, _ = card.headlines
     # 2,400 / 1,200 = 2.00; FY2025: (3,000 - 500) / 1,100 = 2.27; 2.00 - 2.27 = -0.27
     assert (ndebitda.label, ndebitda.text, ndebitda.change) == (
-        "Net debt / EBITDA (incl. leases)", "2.00x", "-0.27x vs FY2025")
+        "Net debt / EBITDA, incl. leases", "2.00x", "-0.27x vs FY2025")
     assert coverage.text == "8.00x"  # not debt-based: unchanged (AC5b)
     assert card.alert_text == "Orange: 1 orange flag"  # CALC12, including leases
 
@@ -276,12 +276,12 @@ def test_ratio_table_has_9_rows_per_company_and_one_column_per_year(alfa_beta):
     assert list(wide["Ticker"]).count("ALFA") == 9 and list(wide["Ticker"]).count("BETA") == 9
     assert wide["Unit"].isin(["USD m", "x", "%"]).all()  # a unit on every row
     alfa = wide[wide["Ticker"] == "ALFA"].set_index("Metric")
-    assert list(alfa.loc["Debt / equity", ["FY2024", "FY2025", "FY2026"]]) == ["1.53x", "1.53x", "1.53x"]
+    assert list(alfa.loc["Debt / equity", ["FY2024", "FY2025", "FY2026"]]) == ["1.53", "1.53", "1.53"]
     assert alfa.loc["Debt / equity", "Latest flag"] == "orange"
-    assert alfa.loc["EBITDA", "Latest flag"] == "no flag"
+    assert alfa.loc["EBITDA", "Latest flag"] == "–"  # amounts get no flag
     # FY2024: D&A not reported -> short status in the cell, reason in Notes
     assert alfa.loc["EBITDA", "FY2024"] == "not available"
-    assert alfa.loc["EBITDA", "Notes"] == "FY2024: not available: D&A not reported"
+    assert alfa.loc["EBITDA", "Notes"] == "FY2024: D&A not reported"  # the cell already says "not available"
 
 
 def test_ratio_table_shows_no_filler_year(alfa_beta):
@@ -289,7 +289,7 @@ def test_ratio_table_shows_no_filler_year(alfa_beta):
     wide, colours = display.ratio_table(table)
     beta = wide[wide["Ticker"] == "BETA"].set_index("Metric")
     assert beta.loc["Current ratio", "FY2024"] == "no data"  # BETA has only FY2025 and FY2026
-    assert beta.loc["Current ratio", "FY2026"] == "0.80x"
+    assert beta.loc["Current ratio", "FY2026"] == "0.80"
     beta_colours = colours[wide["Ticker"] == "BETA"].set_index(wide[wide["Ticker"] == "BETA"]["Metric"])
     assert beta_colours.loc["Current ratio", "FY2026"] == "red"
     assert beta_colours.loc["Current ratio", "FY2024"] == ""
@@ -304,8 +304,8 @@ def test_ratio_table_keeps_the_5_most_recent_years_when_year_ends_differ():
     assert wide.shape == colours.shape
     sept = wide[wide["Ticker"] == "SEPT"].set_index("Metric")
     decm = wide[wide["Ticker"] == "DECM"].set_index("Metric")
-    assert sept.loc["Current ratio", "FY2026"] == "1.50x"  # 1,800 / 1,200
-    assert decm.loc["Current ratio", "FY2025"] == "0.75x"  # 900 / 1,200
+    assert sept.loc["Current ratio", "FY2026"] == "1.50"  # 1,800 / 1,200
+    assert decm.loc["Current ratio", "FY2025"] == "0.75"  # 900 / 1,200
     assert decm.loc["Current ratio", "FY2026"] == "no data"  # DECM's FY2026 is not filed yet
 
 
@@ -316,7 +316,7 @@ def test_latest_flag_names_its_year_when_it_is_not_the_last_column():
     decm = wide[wide["Ticker"] == "DECM"].set_index("Metric")
     assert sept.loc["Current ratio", "Latest flag"] == "green"  # 1.50x >= 1.5, FY2026 = the last column
     assert decm.loc["Current ratio", "Latest flag"] == "red (FY2025)"  # 0.75x < 1.0, its latest year
-    assert decm.loc["EBITDA", "Latest flag"] == "no flag (FY2025)"
+    assert decm.loc["EBITDA", "Latest flag"] == "–"  # amounts get no flag, so no year either
 
 
 def test_table_years_lists_the_shown_and_the_left_out_years(alfa_beta):
@@ -338,15 +338,109 @@ def test_ratio_table_switches_only_the_debt_based_rows(alfa_beta):
     changed = [m for m, a, b in zip(financial["Metric"], financial["FY2026"], leases["FY2026"]) if a != b]
     # AC5b: total debt, net debt, ND/EBITDA and D/E change; the others do not
     assert changed == ["Total debt", "Net debt", "Net debt / EBITDA", "Debt / equity"]
-    assert list(leases["Metric"][1:5]) == ["Total debt (incl. leases)", "Net debt (incl. leases)",
-                                           "Net debt / EBITDA (incl. leases)", "Debt / equity (incl. leases)"]
+    assert list(leases["Metric"][1:5]) == ["Total debt, incl. leases", "Net debt, incl. leases",
+                                           "Net debt / EBITDA, incl. leases", "Debt / equity, incl. leases"]
     # 2,000 + 300 + 200 + 400 + 100 = 3,000 (CALC2b); 3,000 - 600 = 2,400 (CALC3b)
-    assert list(leases["FY2026"][1:3]) == ["3,000 USD m", "2,400 USD m"]
+    assert list(leases["FY2026"][1:3]) == ["3,000", "2,400"]
 
 
 def test_ratio_table_notes_keep_the_reason_of_an_ok_value(alfa_beta):
     _, _, table = alfa_beta
     wide, _ = display.ratio_table(table, incl_leases=True)
     beta = wide[wide["Ticker"] == "BETA"].set_index("Metric")
-    assert beta.loc["Total debt (incl. leases)", "FY2026"] == "1,300 USD m"
-    assert "short-term borrowings not reported" in beta.loc["Total debt (incl. leases)", "Notes"]
+    assert beta.loc["Total debt, incl. leases", "FY2026"] == "1,300"
+    assert "short-term borrowings not reported" in beta.loc["Total debt, incl. leases", "Notes"]
+
+
+# --- Readability of the cards and the table (review of PR #16) -----------------------------------
+
+
+def display_rows(rows):
+    """A small display table written by hand: (ticker, year, metric, unit, value, text, status, flag, reason)."""
+    return pd.DataFrame([
+        {"ticker": t, "company": f"{t} Inc (SAMPLE DATA)", "fiscal_year": y, "period_end": f"{y}-12-31",
+         "metric": m, "label": display.metric_label(m), "unit": u, "value": v, "text": x, "status": s,
+         "flag": f, "reason": r}
+        for t, y, m, u, v, x, s, f, r in rows
+    ], columns=display.DISPLAY_COLUMNS)
+
+
+@pytest.mark.parametrize(
+    "years, expected",
+    [
+        ([2024], "FY2024"),
+        ([2022, 2023, 2024, 2025], "FY2022–FY2025"),
+        ([2022, 2024], "FY2022, FY2024"),
+        ([2021, 2022, 2024], "FY2021–FY2022, FY2024"),
+    ],
+)
+def test_years_text_writes_consecutive_years_as_a_range(years, expected):
+    assert display.years_text(years) == expected
+
+
+def test_notes_give_each_reason_once_with_its_years():
+    nan = math.nan
+    table = display_rows([
+        ("NOTE", 2024, "total_debt_incl_leases", "USD m", 2700, "2,700 USD m", "ok", "", "finance leases not reported"),
+        ("NOTE", 2025, "total_debt_incl_leases", "USD m", 2700, "2,700 USD m", "ok", "", "finance leases not reported"),
+        ("NOTE", 2026, "total_debt_incl_leases", "USD m", 2500, "2,500 USD m", "ok", "",
+         "short-term borrowings not reported; finance leases not reported"),
+        ("NOTE", 2026, "ebitda", "USD m", nan, "not available: D&A not reported", "not available", "", "D&A not reported"),
+    ])
+    wide, _ = display.ratio_table(table, incl_leases=True)
+    row = wide.set_index("Metric")
+    # " | " separates the year groups; "; " stays inside one reason
+    assert row.loc["Total debt, incl. leases", "Notes"] == (
+        "FY2024–FY2025: finance leases not reported | "
+        "FY2026: short-term borrowings not reported; finance leases not reported")
+    assert row.loc["EBITDA", "FY2026"] == "not available"
+    assert row.loc["EBITDA", "Notes"] == "FY2026: D&A not reported"
+
+
+def test_latest_flag_says_na_for_a_ratio_without_value(alfa_beta):
+    _, _, table = alfa_beta
+    wide, _ = display.ratio_table(table)
+    beta = wide[wide["Ticker"] == "BETA"].set_index("Metric")
+    assert beta.loc["Net debt / EBITDA", "Latest flag"] == "n/a"  # D&A not reported: nothing to flag
+    assert beta.loc["Interest coverage", "Latest flag"] == "n/a"  # interest expense not reported
+    assert beta.loc["Net debt", "Latest flag"] == "–"  # an amount: never flagged
+    assert beta.loc["Free cash flow", "Latest flag"] == "red"  # 300 - 450 = -150 < 0
+
+
+def test_table_caption_explains_the_words_of_the_table(alfa_beta):
+    _, _, table = alfa_beta
+    caption = display.table_caption(table, incl_leases=False)
+    assert caption.startswith("Debt definition: Financial debt only.")
+    for words in ['"no data"', '"n/a"', '"–"', "Unit column", "Fiscal year-end dates differ by company"]:
+        assert words in caption, words
+    _, _, sept_decm = pipeline("SEPT", "DECM")
+    assert display.table_caption(sept_decm, incl_leases=True).endswith(
+        "Only the 5 most recent fiscal years are shown; left out: FY2021.")
+
+
+def test_card_says_what_the_alert_covers(alfa_beta):
+    _, flagged, table = alfa_beta
+    card = display.summary_card(table, "BETA", flags.overall_alert(flagged, "BETA"))
+    # the counts are over the 6 flagged ratios, the card shows 3 of them
+    assert card.alert_note == "Alert on all 6 flagged ratios of FY2026 (see the table)."
+
+
+def test_card_change_says_better_or_worse_with_the_thresholds(alfa_beta):
+    _, flagged, table = alfa_beta
+    thresholds = flags.load_thresholds()
+    alfa = display.summary_card(table, "ALFA", flags.overall_alert(flagged, "ALFA"), thresholds=thresholds)
+    ndebitda, coverage, current = alfa.headlines
+    assert ndebitda.change == "-0.22x vs FY2025 (better)"  # 1.42 - 1.64; lower is better
+    assert coverage.change == "+2.00x vs FY2025 (better)"  # 8.00 - 6.00; higher is better
+    assert current.change == "+0.25x vs FY2025 (better)"  # 1.50 - 1.25
+    beta = display.summary_card(table, "BETA", flags.overall_alert(flagged, "BETA"), thresholds=thresholds)
+    assert beta.headlines[2].change == "-0.10x vs FY2025 (worse)"  # 0.80 - 0.90; higher is better
+    leases = display.summary_card(table, "ALFA", flags.overall_alert(flagged, "ALFA", True), True, thresholds)
+    assert leases.headlines[0].change == "-0.27x vs FY2025 (better)"  # 2.00 - 2.27
+
+
+def test_no_change_has_no_better_or_worse():
+    _, flagged, table = pipeline("SEPT")
+    card = display.summary_card(table, "SEPT", flags.overall_alert(flagged, "SEPT"),
+                                thresholds=flags.load_thresholds())
+    assert card.headlines[2].change == "0.00x vs FY2025"  # 1,800 / 1,200 in both years

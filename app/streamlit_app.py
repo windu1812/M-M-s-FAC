@@ -45,6 +45,7 @@ ALERT_COLOURS = {"green": "green", "orange": "orange", "red": "red", "": "gray"}
 CELL_COLOURS = {"green": "#C8E6C9", "orange": "#FFE0B2", "red": "#FFCDD2"}  # the same as the Excel file
 
 TABLE_ROW_HEIGHT = 35  # pixels, so the whole table shows without its own scroll bar
+EMPTY_CELL = "–"  # a cell left empty on purpose (no XBRL tag for an item that is not reported)
 
 
 def escape(text: str) -> str:
@@ -118,16 +119,18 @@ def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
 
 def draw_card(card: display.Card) -> None:
     with st.container(border=True):
-        st.markdown(f"**{escape(card.company)}**")
-        st.caption(f"{card.ticker} · FY{card.fiscal_year}, year ended {card.period_end}")
+        # :small[] keeps the normal text colour (a caption is grey and too pale for required content)
+        st.markdown(f"**{escape(card.company)}**  \n"
+                    f":small[{card.ticker} · FY{card.fiscal_year}, year ended {card.period_end}]")
         colour = ALERT_COLOURS.get(card.alert_level, "gray")
-        st.markdown(f":{colour}-background[:{colour}[**{escape(card.alert_text)}**]]")  # wraps, never cut
+        st.markdown(f":{colour}-background[:{colour}[**{escape(card.alert_text)}**]]  \n"  # wraps, never cut
+                    f":small[{escape(card.alert_note)}]")
         for h in card.headlines:
             flag = f" · :{h.flag}[{h.flag}]" if h.flag else ""
-            st.markdown(f"{escape(h.label)} ({escape(h.unit)})  \n**{escape(h.shown)}**{flag}")
+            st.markdown(f"{escape(h.label)} ({escape(h.unit)})  \n**{escape(h.shown)}**{flag}")  # V1: a unit
             details = [escape(part) for part in (h.note, h.change) if part]
             if details:
-                st.caption(" · ".join(details))
+                st.markdown(f":small[{' · '.join(details)}]")
 
 
 def coloured_table(table: pd.DataFrame, colours: pd.DataFrame):
@@ -141,11 +144,26 @@ def coloured_table(table: pd.DataFrame, colours: pd.DataFrame):
 
 
 def draw_underlying(underlying: pd.DataFrame) -> None:
-    shown = underlying.rename(columns={
+    """The input figures: the value is a number (it sorts and aligns as one); an item that is not
+    reported has an empty value, the status "not reported" and "–" for its tag and accession."""
+    shown = underlying.assign(
+        status=underlying["status"].map(lambda s: "reported" if s == display.STATUS_OK else "not reported"),
+        xbrl_tag=underlying["xbrl_tag"].fillna(EMPTY_CELL),
+        accession=underlying["accession"].fillna(EMPTY_CELL),
+    ).rename(columns={
         "ticker": "Ticker", "fiscal_year": "Fiscal year", "period_end": "Year end", "label": "Item",
-        "text": "Value (USD m)", "xbrl_tag": "XBRL tag", "accession": "10-K accession",
-    })[["Ticker", "Fiscal year", "Year end", "Item", "Value (USD m)", "XBRL tag", "10-K accession"]]
-    st.dataframe(shown, hide_index=True, width="stretch", key="underlying_table")
+        "value": "Value (USD m)", "status": "Status", "xbrl_tag": "XBRL tag", "accession": "10-K accession",
+    })[["Ticker", "Fiscal year", "Year end", "Item", "Value (USD m)", "Status", "XBRL tag", "10-K accession"]]
+    st.dataframe(
+        shown,
+        hide_index=True,
+        width="stretch",
+        column_config={
+            "Value (USD m)": st.column_config.NumberColumn(format="%,d"),  # "1,234", as in the 10-K
+            "Fiscal year": st.column_config.NumberColumn(format="%d"),  # "2026", not "2,026"
+        },
+        key="underlying_table",
+    )
 
 
 # --- The page ------------------------------------------------------------------------------
@@ -209,9 +227,10 @@ else:
         alerts = {t: flags.overall_alert(flagged, t, incl_leases) for t in result["financials"]}
 
         # Summary cards: up to 5 in one row (visual 1).
+        st.header("Summary")
         for column, ticker in zip(st.columns(display.MAX_TICKERS), alerts):  # same card width for 1 to 5
             with column:
-                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases))
+                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds))
 
         for saved, cached in result["cache_dates"].items():
             st.caption(f"Data from SEC EDGAR, saved in the local cache on {saved} ({', '.join(cached)}).")
@@ -219,11 +238,8 @@ else:
         # Slice 6 (François): the two charts and the "Download Excel" button go here.
 
         # Table "Credit ratios, last 5 fiscal years" (visual 4).
-        st.subheader("Credit ratios, last 5 fiscal years")
-        st.caption(f"Debt definition: {display.DEBT_DEFINITIONS[incl_leases]}. Cell colours are the flags; "
-                   "\"Latest flag\" gives the flag of each company's latest fiscal year as a word, with the year "
-                   "when it is not the last column. Fiscal year-end dates differ by company. "
-                   + display.left_out_years_text(display_tbl))
+        st.header("Credit ratios, last 5 fiscal years")
+        st.caption(display.table_caption(display_tbl, incl_leases))
         table, colours = display.ratio_table(display_tbl, incl_leases)
         st.dataframe(
             coloured_table(table, colours),
