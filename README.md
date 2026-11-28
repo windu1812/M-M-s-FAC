@@ -57,7 +57,7 @@ cd app
 .venv/bin/python -m pytest
 ```
 
-The tests never call the internet and do not need `.env` (385 tests passed on 2026-11-28). Revenue, total assets
+The tests never call the internet and do not need `.env` (390 tests passed on 2026-11-28). Revenue, total assets
 and net income of the last 2 fiscal years are reconciled with the 10-K of AAPL, MSFT and NKE, page cited
 (`app/tests/test_reconciliation_10k.py`).
 
