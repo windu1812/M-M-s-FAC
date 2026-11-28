@@ -75,5 +75,44 @@ Marc asked Claude to do the whole slice (decision log of `docs/architecture.md`,
 - `left_out_years_text(display)`: the sentence "Only the 5 most recent fiscal years are shown; left out: FY2021.",
   or nothing when no year is left out.
 
+- Then, at Arthur's request ("Tout corriger"), fixed every other finding in 5 commits, each with its tests seen
+  failing first (except the last commit, which only adds tests for code that was already right):
+  1. input and errors: the field and Run are a form (Enter runs), "Results for:", BRK.B = BRK-B, the input error
+     escaped, an unexpected error stops only its ticker, the same error shown once, a progress box in error when
+     nothing could be loaded, clearer messages (unknown ticker, no 10-K, HTTP 404, damaged cache file);
+  2. clearer cards and table: what the alert covers, "(better)"/"(worse)", normal text colour instead of grey
+     captions, the label ", incl. leases", numbers without unit in the table, shorter notes with year ranges, "n/a"
+     and "–" in "Latest flag", a legend, headings, numeric values in the underlying data;
+  3. rounding halves up as Excel's ROUND, one rule for screen and flags (`flags.shown_value`);
+  4. shared names imported from `ratios.py` and `flags.py`, the cache date read by the data part
+     (`sec_client.cache_saved_on`), a page test for AC6;
+  5. the tests the test reviewer found missing, with 6 new SAMPLE DATA companies and their hand working in
+     `docs/acceptance.md` ("Known answers of the SAMPLE DATA companies").
+- Re-injected the 10 deliberate bugs that had passed the suite in the review: each now makes 1 to 12 tests fail.
+- Ran the page offline on the cached SEC files of AAPL, MSFT and NKE: no error, 5 year columns, the new notes and
+  alert line. 311 passed.
+
+### The new functions, in simple words (session 2, continued)
+- `years_text(years)`: writes years in short form, "FY2022–FY2025" for consecutive years.
+- `table_caption(display, incl_leases)`: the legend under the table title (what "no data", "n/a", "–" and the
+  colours mean).
+- `cell_style(flag)`: the background colour of a table cell for its flag (the same colours as the Excel file).
+- `_latest_flag_word(...)`: the word of the "Latest flag" column for one row.
+- `flags.shown_value(value, unit)`: rounds a value as the screen shows it, halves up like Excel; the colours and the
+  numbers both use it.
+- `sec_client.cache_saved_on(ticker)`: the date the company's file was saved in the cache, or nothing.
+- In the page: `grouped_errors(errors)` puts tickers with the same error in one box; `plural(count, word)` writes
+  "1 company" / "2 companies".
+
+### Mistakes caught (session 2)
+- Removing the unit from the card label (to avoid "(incl. leases) (x)") left a "not available" value with no unit at
+  all, against V1. An existing page test caught it; the unit is back and the label became ", incl. leases".
+- A first version of the progress-box test ended with `or True`, so it could never fail. It was replaced before
+  running, once the AI had checked how AppTest shows `st.status` (a `Status` block with `label` and `state`).
+- A damaged-cache test used a 13-digit CIK file name; the test failed for that reason, not for the code. Fixed to the
+  10-digit name.
+
 ### What remains for people
-- Marc: read this fix (`display.py`, the tests and the caption of the table) before merging PR #16.
+- Marc: read the fixes (`display.py`, the page, the tests, `docs/acceptance.md`) before merging PR #16.
+- Arthur or Marc: look at the page at 1280 px with AAPL, MSFT and NKE, in both debt definitions (long notes, cards).
+- The team: decide whether a company with leverage and coverage "not available" may be "Green" (AC7).

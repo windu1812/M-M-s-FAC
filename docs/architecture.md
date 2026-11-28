@@ -51,7 +51,13 @@ the user as it is. The page catches them for each ticker and still shows the oth
 - `sec_client.SecConfigError`: `SEC_USER_AGENT` is not set (E9).
 - `sec_client.TickerNotFoundError`: the ticker is not in the SEC list.
 - `sec_client.SecUnavailableError`: the SEC cannot be reached and nothing is in the cache (E8).
+- `sec_client.NoFinancialDataError`: the SEC answers HTTP 404, it has no XBRL file for the company.
+- `sec_client.CacheFileError`: the cached file of the company is damaged; the message names the file to delete.
 - `financials.NoAnnualDataError`: the company has no annual 10-K data (E10).
+
+A `ValueError` from `compute_ratios` (an amount not in USD, a fiscal year given twice) is shown as "Data problem", and
+any other error as "Unexpected problem", for that ticker only. `sec_client.cache_saved_on(ticker)` gives the date of
+the cached company file (E7), without downloading.
 
 ## Data model
 
@@ -118,3 +124,8 @@ No paid service is used (decision of 2026-11-20).
 | 2026-11-27 | Display rules: a missing value shows its status in the table cell ("not available") and its reason in a "Notes" column with the years; the card shows "not available" in bold and the reason under it. The change vs the prior fiscal year is computed on the rounded values shown ("+0.17x vs FY2025", margin in "pt"), only when both years have a number and the prior year is the fiscal year just before. A fiscal year a company does not have shows "no data". Tickers: commas or spaces, capitals, each once, 1 to 5 | Short, readable cells; the change agrees with the numbers on screen; never a filler value | Marc (proposed by Claude in slice 5) |
 | 2026-11-27 | Page: light theme and a neutral blue (`#1f4e79`) for buttons and selectors in `app/.streamlit/config.toml`; the debt selector redraws the stored result without downloading again; each ticker's error is caught and shown alone | `product.md`: white background, colour only for flags; V3 | Marc (proposed by Claude in slice 5) |
 | 2026-11-28 | The ratio table shows the 5 most recent fiscal years present (`display.TABLE_YEARS`), never a filler year; older years are named under the title; "Latest flag" names its year when it is not the last column. The Excel Ratios sheet and the 5-year chart keep every fiscal year | AC5 (5 columns) and E11 (only real years) both hold when year ends differ by company; the reader always knows which year a flag belongs to | Arthur (review of PR #16, proposed by Claude) |
+| 2026-11-28 | Arthur asked Claude to fix every finding of the review of PR #16 ("Tout corriger"), on Marc's branch, including the data part (`sec_client.py`, `financials.py`, Arthur's) and the rounding of `flags.py` (Maiwenn's) | The demo is on 2026-11-30; the review found no blocker but many small problems | Arthur |
+| 2026-11-28 | Rounding: halves up, away from zero, as Excel's ROUND (`flags.shown_value`, used by `display.round_value`); before, Python's `round()` gave 2,406 / 1,200 = 2.005 → "2.00x" green where an analyst or Excel gives 2.01x orange | One rule for the number and its colour, the same as the analyst's own Excel | Arthur (proposed by the code and test reviewers) |
+| 2026-11-28 | Page: the ticker field and Run are a form (Enter runs); "Results for:" names the tickers of the results shown; the same error for several tickers is shown once; any unexpected error stops only its ticker; the progress box turns to an error when no company could be loaded | V3 and a safer live demo | Arthur (review of PR #16) |
+| 2026-11-28 | Display words: ratio-table cells hold the number without its unit (the Unit column has it); "Notes" give each reason once with a year range, " \| " between year groups; "Latest flag" says "n/a" for a ratio with no value and "–" for amounts; the leases label is ", incl. leases" ("Net debt / EBITDA, incl. leases (x)"); card changes say "(better)" or "(worse)" from the threshold direction; the card says the alert covers all 6 flagged ratios | Shorter cells, no ambiguous words, no double brackets; the alert counts match what the reader can find | Arthur (review of PR #16) |
+| 2026-11-28 | Not done: a "no data" column for a fiscal year that no company has (code review, minor) | E11 forbids filler years; the year labels already show the gap | Arthur |
