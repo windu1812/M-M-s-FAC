@@ -38,6 +38,25 @@ Branch `9-charts-and-excel-export` (issue #9, slice 6). Owner: François. Tool: 
   point, with "n/a (not available: interest expense not reported)".
 - François downloaded the Excel file from the trial page, opened it and approved the layout.
 
+### 2026-11-28, step 6c: the charts and the Excel button in the real page (done by Arthur, with François's agreement)
+- Arthur asked Claude to do François's step 6c; François had agreed. Claude asked first, because the team rules
+  say not to touch another member's module without asking, and recorded the delegation in `docs/architecture.md`.
+- Merged Marc's branch (PR #16, slice 5, not yet merged into `main`) into this branch, so the page exists here.
+  Resolved the 2 conflicts (`docs/plan.md`, `docs/architecture.md`) by keeping every member's lines in date order.
+- Wrote 9 page tests first (`app/tests/test_charts_page.py`, AppTest, SAMPLE DATA companies ALFA and BETA of
+  Marc), with expected values worked out by hand in `docs/acceptance.md` (CALC4a, CALC4b, CALC6); 8 seen failing
+  (selector, charts and button missing).
+- Added the lines in the "Slice 6" part of `app/streamlit_app.py` only: the "Ratio shown in the charts" selector,
+  the two charts and the "Download Excel" button. Nothing is computed in the page.
+- Three deliberate bugs (charts ignoring the debt definition, Excel Summary ignoring it, 5-year chart stuck on
+  one ratio) each made 1 test fail; the page was then restored.
+- Ran the page offline on the cached SEC files of AAPL, MSFT and NKE: the 6 ratios with both debt definitions,
+  no error; the missing values (MSFT D&A, NKE operating income, AAPL interest after FY2023) are "n/a", never 0;
+  the Excel file has its 4 sheets.
+- Not done by the AI: looking at the page in a browser (no browser tool in this session).
+
 ## Reviewed by the student
 - [x] François read the code and this log (2026-11-26; `comparison_bar_chart`, `trend_line_chart` and `build_excel`
   explained to him function by function).
+- [ ] François read the step 6c lines of `app/streamlit_app.py` and `app/tests/test_charts_page.py`, and can
+  explain them (to do before the merge).
