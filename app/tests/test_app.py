@@ -119,7 +119,7 @@ def test_cards_show_the_ratios_changes_and_overall_alert(cache):
     assert "**8.00x**" in text and "+2.00x vs FY2025" in text
     assert ":orange-background[:orange[**Orange: 1 orange flag**]]" in text  # word and colour (AC7)
     # BETA: current ratio 0.80 and FCF -150 red; ND/EBITDA, coverage, margin not available (AC7)
-    assert ":red-background[:red[**Red: 2 red flags, 3 not available**]]" in text
+    assert ":gray-background[:gray[**N/A: 3 not available, 2 red flags, 1 green flag**]]" in text  # not rated
     assert "Interest coverage (x): **not available**" in text
     assert "interest expense not reported" in text  # the reason, under the value
 

@@ -46,6 +46,11 @@ ORANGE = "orange"
 RED = "red"
 NO_FLAG = ""
 
+# Team decision of 2026-11-28: with 3 or more of the 6 flagged ratios "not available", a company cannot be rated,
+# and its overall alert is "N/A". With 1 or 2 not available, the alert is rated on the others as usual.
+MAX_NOT_AVAILABLE_TO_RATE = 2
+NOT_RATED_TITLE = "N/A"
+
 LOWER_IS_BETTER = "lower_is_better"
 HIGHER_IS_BETTER = "higher_is_better"
 DIRECTIONS = (LOWER_IS_BETTER, HIGHER_IS_BETTER)
@@ -290,7 +295,9 @@ def overall_alert(flagged: pd.DataFrame, ticker: str, incl_leases: bool = False)
     not_available = int((year["status"] == STATUS_NOT_AVAILABLE).sum())
     not_meaningful = int((year["status"] == STATUS_NOT_MEANINGFUL).sum())
 
-    if counts[RED]:
+    if not_available > MAX_NOT_AVAILABLE_TO_RATE:
+        level = NO_FLAG  # too many ratios missing to rate the company
+    elif counts[RED]:
         level = RED
     elif counts[ORANGE]:
         level = ORANGE
@@ -299,12 +306,16 @@ def overall_alert(flagged: pd.DataFrame, ticker: str, incl_leases: bool = False)
     else:
         level = NO_FLAG  # nothing could be flagged: never say "green" in that case
 
-    parts = [_count(counts[level], f"{level} flag")] if level else []
-    if not_available:
-        parts.append(f"{not_available} not available")
+    if level:  # "Red: 1 red flag, 2 not available"
+        parts = [_count(counts[level], f"{level} flag")]
+        if not_available:
+            parts.append(f"{not_available} not available")
+    else:  # "N/A: 3 not available, 3 green flags": the flags that exist are still counted
+        parts = [f"{not_available} not available"] if not_available else []
+        parts += [_count(counts[colour], f"{colour} flag") for colour in (RED, ORANGE, GREEN) if counts[colour]]
     if not_meaningful:
         parts.append(f"{not_meaningful} not meaningful")
-    title = level.capitalize() if level else "No flag"
+    title = level.capitalize() if level else NOT_RATED_TITLE
     text = f"{title}: {', '.join(parts)}" if parts else title
 
     return Alert(
