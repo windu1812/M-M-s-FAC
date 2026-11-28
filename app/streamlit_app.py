@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
@@ -44,6 +46,11 @@ DATA_ERRORS = tuple(ERROR_TITLES)
 ALERT_COLOURS = {"green": "green", "orange": "orange", "red": "red", "": "gray"}
 
 TABLE_ROW_HEIGHT = 35  # pixels, so the whole table shows without its own scroll bar
+STYLE_FILE = Path(__file__).with_name("style.css")  # the look of the page (fonts, cards, hidden Streamlit controls)
+# Card width in pixels, by number of companies: wide cards for 1 to 3, 5 still fit in one row on a 1280 px laptop.
+# The cards sit in a row that wraps, so a narrower window shows fewer cards per row (responsive).
+CARD_WIDTH = {1: 352, 2: 352, 3: 352, 4: 268, 5: 210}
+PLOTLY_CONFIG = {"displayModeBar": False}  # no Plotly toolbar over the charts
 EMPTY_CELL = "–"  # a cell left empty on purpose (no XBRL tag for an item that is not reported)
 
 
@@ -67,8 +74,9 @@ def plural(count: int, word: str) -> str:
 def fetch(tickers: list[str]) -> dict:
     """Get the 10-K data of each ticker; an error stops only its own ticker (V3)."""
     data, errors = {}, {}
-    with st.status(f"Loading {plural(len(tickers), 'company')} from SEC EDGAR or the local cache...",
-                   expanded=True) as status:
+    box = st.empty()  # the progress box: removed after a clean run, kept when something failed
+    with box.status(f"Loading {plural(len(tickers), 'company')} from SEC EDGAR or the local cache...",
+                    expanded=True) as status:
         for ticker in tickers:
             st.write(f"Fetching {ticker} from SEC EDGAR...")
             try:
@@ -88,6 +96,8 @@ def fetch(tickers: list[str]) -> dict:
         if errors:
             label += f"; {plural(len(errors), 'error')} (see below)"
         status.update(label=label, state="complete" if data else "error", expanded=False)
+    if not errors:
+        box.empty()  # every company loaded: the "Results for" line says it, and the cards move up
     return {"tickers": tickers, "financials": data, "errors": errors, "cache_dates": cache_dates(list(data))}
 
 
@@ -105,8 +115,9 @@ def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
 # --- Drawing --------------------------------------------------------------------------------
 
 
-def draw_card(card: display.Card) -> None:
-    with st.container(border=True):
+def draw_card(card: display.Card, width: int) -> None:
+    # A keyed container: style.css draws it as a grey tile (class st-key-card_<ticker>).
+    with st.container(key=f"card_{card.ticker}", width=width, gap="xsmall"):
         # :small[] keeps the normal text colour (a caption is grey and too pale for required content)
         st.markdown(f"**{escape(card.company)}**  \n"
                     f":small[{card.ticker} · FY{card.fiscal_year}, year ended {card.period_end}]")
@@ -115,10 +126,11 @@ def draw_card(card: display.Card) -> None:
                     f":small[{escape(card.alert_note)}]")
         for h in card.headlines:
             flag = f" · :{h.flag}[{h.flag}]" if h.flag else ""
-            st.markdown(f"{escape(h.label)} ({escape(h.unit)})  \n**{escape(h.shown)}**{flag}")  # V1: a unit
+            line = f"{escape(h.label)} ({escape(h.unit)}): **{escape(h.shown)}**{flag}"  # one line; V1: a unit
             details = [escape(part) for part in (h.note, h.change) if part]
             if details:
-                st.markdown(f":small[{' · '.join(details)}]")
+                line += f"  \n:small[{' · '.join(details)}]"  # the note and the change, just under it
+            st.markdown(line)
 
 
 def coloured_table(table: pd.DataFrame, colours: pd.DataFrame):
@@ -152,26 +164,34 @@ def draw_underlying(underlying: pd.DataFrame) -> None:
 # --- The page ------------------------------------------------------------------------------
 
 st.set_page_config(page_title="CreditLens", layout="wide")
+# The page's own style sheet (a file of the project, no user text in it, so HTML is safe here).
+st.markdown(f"<style>{STYLE_FILE.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
 st.title("CreditLens")
 st.caption("5-year credit screen of US companies, from their 10-K filings on SEC EDGAR.")
 
-input_column, debt_column = st.columns([3, 2], vertical_alignment="bottom")
+# One row: the tickers, Run and the debt definition, aligned, so the cards fit on the first screen.
+input_column, debt_column = st.columns([1.4, 1], vertical_alignment="top")  # labels on the same line
 with input_column:
     # A form, so that Enter in the field runs the screen like the Run button does.
     with st.form("ticker_form", border=False):
-        st.text_input(
-            "Tickers (1 to 5 US companies, separated by commas)",
-            placeholder="AAPL, MSFT, NKE",
-            key="tickers",
-        )
-        run_clicked = st.form_submit_button("Run", type="primary", key="run")
+        field_column, run_column = st.columns([5, 1], vertical_alignment="bottom")
+        with field_column:
+            st.text_input(
+                "Tickers (1 to 5 US companies, separated by commas)",
+                placeholder="AAPL, MSFT, NKE",
+                key="tickers",
+            )
+        with run_column:
+            run_clicked = st.form_submit_button("Run", type="primary", key="run", width="stretch")
 with debt_column:  # outside the form: switching it redraws at once, without Run
-    incl_leases = st.radio(
+    incl_leases = st.segmented_control(  # both choices visible, the same height as the ticker field
         "Debt definition",
         options=[False, True],
         format_func=display.DEBT_DEFINITIONS.get,
-        horizontal=True,
+        default=False,
+        required=True,  # one definition is always selected
+        wrap=True,  # in a narrow window the second choice goes under the first, never cut off
         key="incl_leases",
         help="Including leases and short-term borrowings adds commercial paper and lease liabilities to debt.",
     )
@@ -191,8 +211,12 @@ if result is None:
         st.markdown("Enter 1 to 5 US tickers, for example **AAPL, MSFT, NKE**, then click **Run** "
                     "(or press Enter).")
 else:
-    st.markdown(f"Results for: **{escape(', '.join(result['tickers']))}** "
-                "(change the tickers and click Run to update)")
+    # Two small lines under the inputs: what the results are, and where the data comes from (E7).
+    with st.container(gap="xxsmall"):
+        st.caption(f"Results for: **{escape(', '.join(result['tickers']))}** "
+                   "(change the tickers and click Run to update)")
+        for saved, cached in result["cache_dates"].items():
+            st.caption(f"Data from SEC EDGAR, saved in the local cache on {saved} ({', '.join(cached)}).")
     for tickers, title, message in display.grouped_errors(result["errors"]):
         st.error(f"**{escape(', '.join(tickers))}: {escape(title)}.** {escape(message)}")
 
@@ -211,12 +235,10 @@ else:
 
         # Summary cards: up to 5 in one row (visual 1).
         st.header("Summary")
-        for column, ticker in zip(st.columns(display.MAX_TICKERS), alerts):  # same card width for 1 to 5
-            with column:
-                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds))
-
-        for saved, cached in result["cache_dates"].items():
-            st.caption(f"Data from SEC EDGAR, saved in the local cache on {saved} ({', '.join(cached)}).")
+        with st.container(horizontal=True, wrap=True, gap="small", key="cards"):  # wraps in a narrow window
+            for ticker in alerts:
+                draw_card(display.summary_card(display_tbl, ticker, alerts[ticker], incl_leases, thresholds),
+                          CARD_WIDTH[len(alerts)])
 
         # Slice 6 (François): the two charts and the "Download Excel" button (visuals 2, 3 and 5).
         # charts.py draws and export.py writes the values of display_tbl; nothing is computed here.
@@ -232,8 +254,9 @@ else:
         if empty_charts:
             st.info(empty_charts)  # an empty chart would look like a bug: say why
         st.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
-                        width="stretch", key="comparison_chart")
-        st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", key="trend_chart")
+                        width="stretch", config=PLOTLY_CONFIG, key="comparison_chart")
+        st.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", config=PLOTLY_CONFIG,
+                        key="trend_chart")
 
         today = date.today().isoformat()
         st.download_button(
