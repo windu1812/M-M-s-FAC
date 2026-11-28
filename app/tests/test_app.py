@@ -358,3 +358,61 @@ def test_ac6_changing_the_thresholds_file_changes_the_flag_on_the_page(cache, mo
     after = run("BETA")
     beta = table(after, "ratio_table").set_index("Metric")
     assert beta.loc["Current ratio", "Latest flag"] == "green"  # 0.80 >= 0.8
+
+
+# --- Tests asked by the test review of PR #16 -------------------------------------------------------
+
+
+def card_lines(at: AppTest) -> list[str]:
+    """The "TICKER · FY…, year ended …" line of each card on the page."""
+    lines = [m.value for m in at.markdown if " · FY" in m.value and ":small[" in m.value]
+    return [line.split(":small[")[1].rstrip("]") for line in lines]
+
+
+def test_three_companies_give_exactly_three_cards(cache):
+    """AC1 with 3 companies."""
+    at = run("ALFA, BETA, SEPT")
+
+    assert card_lines(at) == ["ALFA · FY2026, year ended 2026-12-31", "BETA · FY2026, year ended 2026-05-31",
+                              "SEPT · FY2026, year ended 2026-09-30"]
+
+
+def test_five_tickers_are_run_and_each_failure_is_shown(cache, monkeypatch):
+    """AC2 upper limit: 5 tickers are accepted; V3: 2 cards and 3 errors, one per failing ticker."""
+    def no_internet(*args, **kwargs):
+        raise requests.ConnectionError("no network")
+
+    monkeypatch.setattr(requests, "get", no_internet)
+    at = run("ALFA, BETA, FRGN, ZZZZ, NCCH")
+
+    assert not any("Enter 1 to 5 tickers" in e for e in errors(at))
+    assert len(card_lines(at)) == 2
+    assert [e.split(":")[0] for e in errors(at)] == ["**FRGN", "**ZZZZ", "**NCCH"]
+
+
+def test_data_problem_stops_only_its_ticker(cache):
+    """DUPY files two 10-K year ends in 2025: the same fiscal year twice."""
+    at = run("DUPY, ALFA")
+
+    assert "DUPY: Data problem." in at.error[0].value and "given twice" in at.error[0].value
+    assert card_lines(at) == ["ALFA · FY2026, year ended 2026-12-31"]
+
+
+def test_alert_on_the_card_switches_with_the_debt_definition(cache):
+    """AC5b: the flags and the alert change in the cards."""
+    at = run("GAMA")
+    assert ":green-background[:green[**Green: 6 green flags**]]" in page_text(at)
+
+    at.radio(key="incl_leases").set_value(True).run()
+
+    assert ":orange-background[:orange[**Orange: 2 orange flags**]]" in page_text(at)
+    assert "**2.50x** · :orange[orange]" in page_text(at)  # (1,500 + 1,000) / 1,000
+
+
+def test_not_meaningful_is_shown_on_the_card_and_in_the_table(cache):
+    at = run("NEGA")
+
+    assert ":red-background[:red[**Red: 2 red flags, 2 not meaningful**]]" in page_text(at)
+    assert "Net debt / EBITDA (x)  \n**not meaningful**" in page_text(at)
+    nega = table(at, "ratio_table").set_index("Metric")
+    assert nega.loc["Debt / equity", "FY2026"] == "not meaningful"

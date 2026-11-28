@@ -466,3 +466,95 @@ def test_no_change_has_no_better_or_worse():
     card = display.summary_card(table, "SEPT", flags.overall_alert(flagged, "SEPT"),
                                 thresholds=flags.load_thresholds())
     assert card.headlines[2].change == "0.00x vs FY2025"  # 1,800 / 1,200 in both years
+
+
+# --- Tests asked by the test review of PR #16 (expected values: docs/acceptance.md, "Known answers of the
+# --- SAMPLE DATA companies") -------------------------------------------------------------------------
+
+
+def latest_flag_word(word: str) -> str:
+    """The flag colour behind a "Latest flag" word: "red (FY2025)" -> "red"; "n/a" and "–" -> ""."""
+    word = word.split(" (")[0]
+    return "" if word in (display.NO_FLAG_TEXT, display.NOT_FLAGGED_TEXT) else word
+
+
+def test_cell_colours_follow_each_year_flag(alfa_beta):
+    _, _, table = alfa_beta
+    wide, colours = display.ratio_table(table)
+    alfa = wide["Ticker"] == "ALFA"
+    margin = colours[alfa & (wide["Metric"] == "EBITDA margin")].iloc[0]
+    # FY2024: D&A not reported -> no colour; FY2025: 1,100 / 6,000 = 18.3 % (orange, >= 10 and < 20);
+    # FY2026: 1,200 / 6,000 = 20.0 % (green, >= 20)
+    assert (margin["FY2024"], margin["FY2025"], margin["FY2026"]) == ("", "orange", "green")
+    assert wide[alfa & (wide["Metric"] == "EBITDA margin")].iloc[0]["Latest flag"] == "green"
+    assert colours[alfa & (wide["Metric"] == "Net debt / EBITDA")].iloc[0]["FY2024"] == ""
+
+
+@pytest.mark.parametrize("tickers", [("ALFA", "BETA"), ("SEPT", "DECM"), ("GAMA", "NEGA", "RCVR")])
+@pytest.mark.parametrize("incl_leases", [False, True])
+def test_latest_flag_word_matches_the_colour_of_the_latest_year(tickers, incl_leases):
+    _, _, table = pipeline(*tickers)
+    wide, colours = display.ratio_table(table, incl_leases)
+    year_columns = [c for c in wide.columns if c.startswith("FY")]
+    for i in range(len(wide)):
+        filled = [c for c in year_columns if wide.iloc[i][c] != display.NO_YEAR_TEXT]
+        assert latest_flag_word(wide.iloc[i]["Latest flag"]) == colours.iloc[i][filled[-1]], wide.iloc[i]["Metric"]
+
+
+@pytest.mark.parametrize(
+    "flag, colour",
+    [("red", "#FFCDD2"), ("orange", "#FFE0B2"), ("green", "#C8E6C9")],  # the same as the Excel file
+)
+def test_cell_style_gives_each_flag_its_colour(flag, colour):
+    assert display.cell_style(flag) == f"background-color: {colour}; color: #1a1a1a"
+
+
+def test_cell_style_of_no_flag_is_empty():
+    assert display.cell_style("") == ""
+
+
+def test_alert_changes_with_the_debt_definition():
+    """AC5b: GAMA is green with financial debt only and orange including leases."""
+    _, flagged, table = pipeline("GAMA")
+    financial = display.summary_card(table, "GAMA", flags.overall_alert(flagged, "GAMA"))
+    leases = display.summary_card(table, "GAMA", flags.overall_alert(flagged, "GAMA", True), True)
+    # 1,500 / 1,000 = 1.50x green; 1,500 / 2,000 = 0.75x green; 800 / 100 = 8.00x; 1,500 / 1,000 = 1.50x;
+    # 1,000 / 4,000 = 25.0 %; 500 - 200 = 300: all 6 green
+    assert (financial.alert_level, financial.alert_text) == ("green", "Green: 6 green flags")
+    # (1,500 + 1,000) / 1,000 = 2.50x orange; 2,500 / 2,000 = 1.25x orange
+    assert (leases.alert_level, leases.alert_text) == ("orange", "Orange: 2 orange flags")
+    assert leases.headlines[0].text == "2.50x" and leases.headlines[0].flag == "orange"
+
+
+def test_not_meaningful_values_are_shown_as_such():
+    """E3, E4: EBITDA -300 + 200 = -100 <= 0, and equity -100."""
+    _, flagged, table = pipeline("NEGA")
+    assert cell(table, "NEGA", 2026, "net_debt_to_ebitda")["text"] == "not meaningful: EBITDA ≤ 0"
+    assert cell(table, "NEGA", 2026, "debt_to_equity")["text"] == "not meaningful: negative equity"
+    assert cell(table, "NEGA", 2026, "interest_coverage")["text"] == "-2.40x"  # -300 / 125, red
+    assert cell(table, "NEGA", 2026, "ebitda_margin")["text"] == "-1.7 %"  # -100 / 6,000 = -1.67 %, red
+    card = display.summary_card(table, "NEGA", flags.overall_alert(flagged, "NEGA"))
+    assert card.alert_text == "Red: 2 red flags, 2 not meaningful"
+    ndebitda = card.headlines[0]
+    assert (ndebitda.shown, ndebitda.note, ndebitda.change) == ("not meaningful", "EBITDA ≤ 0", "")
+    wide, _ = display.ratio_table(table)
+    nega = wide.set_index("Metric")
+    assert nega.loc["Net debt / EBITDA", "FY2026"] == "not meaningful"
+    assert nega.loc["Net debt / EBITDA", "Notes"] == "FY2026: EBITDA ≤ 0"
+    assert nega.loc["Net debt / EBITDA", "Latest flag"] == "n/a"
+
+
+def test_change_after_a_not_meaningful_year_says_why_there_is_none():
+    _, flagged, table = pipeline("RCVR")
+    card = display.summary_card(table, "RCVR", flags.overall_alert(flagged, "RCVR"))
+    assert card.headlines[0].text == "1.42x"  # CALC4a
+    assert card.headlines[0].change == "no change shown: FY2025 not meaningful"
+    assert card.headlines[1].change == "+10.40x vs FY2025"  # coverage 8.00 - (-2.40)
+
+
+@pytest.mark.parametrize("ticker", ["GAPY", "ONEY"])
+def test_no_prior_fiscal_year_gives_no_change(ticker):
+    # GAPY has FY2024 and FY2026 (the change is never computed against FY2024); ONEY has FY2026 only
+    _, flagged, table = pipeline(ticker)
+    card = display.summary_card(table, ticker, flags.overall_alert(flagged, ticker))
+    assert [h.change for h in card.headlines] == ["no change shown: no FY2025 data"] * 3

@@ -12,6 +12,16 @@ paper, independently of the app's code (AGENTS.md, rule 5).
 * SEPT and DECM: two companies whose year ends differ (September and December).
   SEPT already has FY2026 (FY2022 to FY2026); DECM ends at FY2025 (FY2021 to
   FY2025). Together they cover 6 fiscal years, but the ratio table shows 5.
+* GAMA: green with financial debt only, orange including leases (its alert
+  changes with the debt definition).
+* NEGA: EBITDA <= 0 and negative equity in FY2026 ("not meaningful").
+* RCVR: the NEGA year in FY2025, then the example company in FY2026.
+* GAPY (FY2024 and FY2026, no FY2025) and ONEY (FY2026 only): no prior year.
+* DUPY: two year ends in 2025 (January and December), the same fiscal year
+  twice: a "Data problem" for this ticker only.
+
+The hand working of every expected value is in docs/acceptance.md
+("Known answers of the SAMPLE DATA companies").
 
 :func:`write_cache` saves them as the SEC files of the local cache, so the page
 reads them exactly as it would read real downloaded files.
@@ -76,6 +86,29 @@ BETA_FY2025 = {**BETA_FY2026, "current_assets": 2700}
 # DECM: the same, but current assets 900 (current ratio 900 / 1,200 = 0.75x, red).
 DECM_YEAR = {**EXAMPLE_FY2026, "current_assets": 900}
 
+# GAMA: EBITDA 800 + 200 = 1,000; debt 1,500 (no current portion, no cash); operating leases 1,000.
+GAMA_FY2026 = {
+    "revenue": 4000,
+    "operating_income": 800,
+    "net_income": 500,
+    "depreciation_amortization": 200,
+    "interest_expense": 100,
+    "total_assets": 5000,
+    "total_liabilities": 3000,
+    "long_term_debt": 1500,
+    "long_term_debt_current": 0,
+    "operating_lease_liabilities": 1000,
+    "cash": 0,
+    "stockholders_equity": 2000,
+    "current_assets": 1500,
+    "current_liabilities": 1000,
+    "operating_cash_flow": 500,
+    "capex": 200,
+}
+
+# NEGA: the example company with an operating loss of 300 (EBITDA -300 + 200 = -100) and equity -100.
+NEGA_FY2026 = {**EXAMPLE_FY2026, "operating_income": -300, "stockholders_equity": -100}
+
 COMPANIES = {
     "ALFA": {
         "cik": 1111111,
@@ -105,6 +138,42 @@ COMPANIES = {
         "cik": 6666666,
         "name": "December Year End Inc (SAMPLE DATA)",
         "years": {f"{year}-12-31": DECM_YEAR for year in range(2021, 2026)},
+        "form": "10-K",
+    },
+    "GAMA": {
+        "cik": 7777777,
+        "name": "Gama Leases Inc (SAMPLE DATA)",
+        "years": {"2026-12-31": GAMA_FY2026},
+        "form": "10-K",
+    },
+    "NEGA": {
+        "cik": 8888888,
+        "name": "Nega Loss Inc (SAMPLE DATA)",
+        "years": {"2026-12-31": NEGA_FY2026, "2025-12-31": EXAMPLE_FY2026},
+        "form": "10-K",
+    },
+    "RCVR": {
+        "cik": 9999999,
+        "name": "Recovery Inc (SAMPLE DATA)",
+        "years": {"2026-12-31": EXAMPLE_FY2026, "2025-12-31": NEGA_FY2026},
+        "form": "10-K",
+    },
+    "GAPY": {
+        "cik": 1212121,
+        "name": "Gap Year Inc (SAMPLE DATA)",
+        "years": {"2026-12-31": EXAMPLE_FY2026, "2024-12-31": EXAMPLE_FY2026},
+        "form": "10-K",
+    },
+    "ONEY": {
+        "cik": 1313131,
+        "name": "One Year Inc (SAMPLE DATA)",
+        "years": {"2026-12-31": EXAMPLE_FY2026},
+        "form": "10-K",
+    },
+    "DUPY": {
+        "cik": 1414141,
+        "name": "Duplicate Year Inc (SAMPLE DATA)",
+        "years": {"2025-12-31": EXAMPLE_FY2026, "2025-01-10": EXAMPLE_FY2026},
         "form": "10-K",
     },
 }

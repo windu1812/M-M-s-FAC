@@ -41,7 +41,6 @@ DATA_ERRORS = tuple(ERROR_TITLES)
 
 # Colours of the alert line and of the table cells: colour is used only for the flags.
 ALERT_COLOURS = {"green": "green", "orange": "orange", "red": "red", "": "gray"}
-CELL_COLOURS = {"green": "#C8E6C9", "orange": "#FFE0B2", "red": "#FFCDD2"}  # the same as the Excel file
 
 TABLE_ROW_HEIGHT = 35  # pixels, so the whole table shows without its own scroll bar
 EMPTY_CELL = "–"  # a cell left empty on purpose (no XBRL tag for an item that is not reported)
@@ -131,12 +130,7 @@ def draw_card(card: display.Card) -> None:
 
 def coloured_table(table: pd.DataFrame, colours: pd.DataFrame):
     """The ratio table with each fiscal-year cell in its flag colour (the word is in "Latest flag")."""
-
-    def css(flag: str) -> str:
-        colour = CELL_COLOURS.get(flag)
-        return f"background-color: {colour}; color: #1a1a1a" if colour else ""
-
-    return table.style.apply(lambda _: colours.map(css), axis=None)
+    return table.style.apply(lambda _: colours.map(display.cell_style), axis=None)
 
 
 def draw_underlying(underlying: pd.DataFrame) -> None:

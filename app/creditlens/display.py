@@ -114,6 +114,8 @@ UNDERLYING_COLUMNS = ["ticker", "company", "fiscal_year", "period_end", "item", 
 NO_FLAG_TEXT = "n/a"  # a flagged ratio with no value to flag ("not available" or "not meaningful")
 NOT_FLAGGED_TEXT = "–"  # an amount (EBITDA, total debt, net debt): never flagged
 NO_YEAR_TEXT = "no data"  # the company has no 10-K figures for that fiscal year
+# Cell colours of the ratio table: light, so the dark text stays readable; the same as the Excel file.
+CELL_COLOURS = {"green": "#C8E6C9", "orange": "#FFE0B2", "red": "#FFCDD2"}
 NOTES_SEPARATOR = " | "  # between the year groups of the "Notes" column ("; " stays inside one reason)
 
 TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
@@ -456,6 +458,12 @@ def _latest_flag_word(metric: str, metric_rows: pd.DataFrame, last_column_year: 
     if latest_year != last_column_year:  # this company has no figure in the last column yet
         word += f" ({_year_column(latest_year)})"
     return word
+
+
+def cell_style(flag: str) -> str:
+    """The CSS of a ratio-table cell with this flag: its colour, or "" for no flag."""
+    colour = CELL_COLOURS.get(flag)
+    return f"background-color: {colour}; color: #1a1a1a" if colour else ""
 
 
 def table_caption(display: pd.DataFrame, incl_leases: bool = False) -> str:
