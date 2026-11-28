@@ -57,7 +57,7 @@ cd app
 .venv/bin/python -m pytest
 ```
 
-The tests never call the internet and do not need `.env` (379 tests passed on 2026-11-28). Revenue, total assets
+The tests never call the internet and do not need `.env` (385 tests passed on 2026-11-28). Revenue, total assets
 and net income of the last 2 fiscal years are reconciled with the 10-K of AAPL, MSFT and NKE, page cited
 (`app/tests/test_reconciliation_10k.py`).
 
@@ -124,7 +124,8 @@ orange if one is orange, otherwise green. Its text counts the ratios that are "n
 - **The first run needs the internet.** Without it and without a cached copy, the page shows "SEC EDGAR unreachable"
   for that ticker. Warm the cache before a demo by running the demo tickers once.
 - **Best on a laptop.** The page adapts to the window width (cards wrap: 3 per row on a laptop, 1 on a phone),
-  but the wide ratio table and the charts are easier to read on a screen of 1280 px or more.
+  but the wide ratio table and the charts are easier to read on a screen of 1280 px or more. The ratio table shows
+  every note in full: scroll it sideways inside its box (Ticker and Metric stay in view).
 
 ## Repository
 

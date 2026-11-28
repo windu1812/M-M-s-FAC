@@ -467,7 +467,12 @@ def test_inputs_are_on_one_row(cache):
     """The ticker field, Run and the debt definition sit side by side, so the cards are visible without scrolling."""
     at = start()
 
-    rows = [b for b in at.main.children.values() if [type(c).__name__ for c in getattr(b, "children", {}).values()]
+    def blocks(node):  # every block of the page, at any depth (the row is inside the search panel)
+        for child in getattr(node, "children", {}).values():
+            yield child
+            yield from blocks(child)
+
+    rows = [b for b in blocks(at.main) if [type(c).__name__ for c in getattr(b, "children", {}).values()]
             == ["Column", "Column"]]  # st.columns: one row
     row = rows[0]
     keys = [w.key for w in row.get("text_input") + row.get("button") + row.get("button_group")]
@@ -519,3 +524,59 @@ def test_cards_flow_in_a_wrapping_row(cache):
     cards = [b for b in at.main.get("flex_container") if getattr(b.proto.flex_container, "wrap", False)]
     assert cards, "no wrapping row of cards"
     assert len(card_lines(at)) == 2
+
+
+# --- Modern, responsive page (design of 2026-11-28, branch design/modern-ui) ---------------------------
+
+
+def test_example_button_fills_in_the_demo_tickers_and_runs(monkeypatch):
+    """Empty state: one click runs the demo companies (offline here, so they end as "SEC EDGAR unreachable")."""
+
+    def no_network(*args, **kwargs):
+        raise requests.ConnectionError("no network")
+
+    monkeypatch.setattr(requests, "get", no_network)
+    at = start()
+
+    at.button(key="example").click().run()
+
+    assert not at.exception
+    assert at.text_input(key="tickers").value == "AAPL, MSFT, NKE"
+    assert "Results for: **AAPL, MSFT, NKE**" in page_text(at)
+    assert any("SEC EDGAR unreachable" in e for e in errors(at))  # it ran: one error line for the 3 tickers
+
+
+def test_top_bar_links_to_the_sections_once_there_are_results(cache):
+    def bar(at):
+        return next(m.value for m in at.markdown if 'class="cl-nav"' in m.value)
+
+    assert "href=" not in bar(start())  # nothing to jump to yet
+    at = run("ALFA")
+    links = bar(at)
+    for anchor in ("#summary", "#charts", "#ratios"):
+        assert f'href="{anchor}"' in links
+    assert [h.proto.anchor for h in at.header] == ["summary", "charts", "ratios"]
+
+
+def test_ratio_table_shows_every_note_and_year_cell_in_full(cache, monkeypatch):
+    """Fiscal-year columns fit "not available"; the Notes column is as wide as its longest note (the table then
+    scrolls sideways inside its box) and Ticker and Metric stay in view (review of PR #16, ux-reviewer #3)."""
+    import json
+
+    from creditlens import display
+
+    long_note = "FY2022: operating income not reported; D&A not reported | FY2023–FY2026: operating income not reported"
+
+    def with_a_long_note(*args, **kwargs):  # NKE's real notes are this long (138 characters at most)
+        table, colours = real_ratio_table(*args, **kwargs)
+        table.loc[table.index[0], "Notes"] = long_note
+        return table, colours
+
+    real_ratio_table = display.ratio_table
+    monkeypatch.setattr(display, "ratio_table", with_a_long_note)
+    at = run("ALFA, BETA")
+
+    config = json.loads(at.dataframe[0].proto.columns)
+    assert config["Notes"]["width"] >= 7 * len(long_note)  # about 7 pixels per character
+    assert all(config[year]["width"] >= 100 for year in config if year.startswith("FY"))
+    assert config["Ticker"]["pinned"] and config["Metric"]["pinned"]

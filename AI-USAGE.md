@@ -16,7 +16,7 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 - **What AI did:**
   - turned the product interview into the four documents of `docs/` (product, architecture, acceptance, plan);
   - wrote most of the code: SEC client and XBRL extraction, ratios, flags, display and page, charts, Excel export;
-  - wrote the tests first (379 offline tests at the end), with hand-worked expected values;
+  - wrote the tests first (385 offline tests at the end), with hand-worked expected values;
   - broke its own code on purpose to prove the tests catch mistakes (more than 50 deliberate bugs over the slices);
   - reviewed pull request #16 as reviewer agents (2 rounds), at Arthur's request, then fixed the findings;
   - wrote the team guide in French, and the root `README.md` and this file.
@@ -62,6 +62,8 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 | 2026-11-28 | Arthur (with François's agreement) | Slice 6c: charts selector, the two charts and "Download Excel" in the real page; "Latest flag" words equal in Excel and on screen; a sentence when no company has a value for the chosen ratio | 9 + 5 page tests; 3 deliberate bugs; page run offline on the cached AAPL, MSFT, NKE files | Accepted; François to read the 6c lines before the merge |
 | 2026-11-28 | Arthur | Compact top of page (`design/compact-top`): inputs on one aligned row, debt definition as two buttons, cards visible without scrolling at 1280 × 800 | 3 new tests (375 passed); screenshots at 4 widths and the empty and error states | Validated by Arthur; merged with PR #18 |
 | 2026-11-28 | Arthur | Responsive, clean product-page look (`design/apple-style`): theme colours and pill buttons, system font, grey card tiles that wrap with the window, Deploy button, Streamlit menu (screencast recorder) and toolbars hidden, no Plotly toolbar | 4 new tests (379 passed); screenshots at 1440, 1280, 1000 and 390 px | Validated by Arthur; merged with PR #18 |
+| 2026-11-28 | Arthur (team decision) | Overall alert "N/A" when 3 or more of the 6 flagged ratios are not available (`fix/alert-na-many-missing`); the AI first checked the real data and asked, because "N/A as soon as one is missing" would have made all 3 demo companies N/A | 3 tests first, 3 deliberate bugs caught; NKE now "N/A: 3 not available, 3 green flags" | Accepted by Arthur; Maiwenn to read the change of her module |
+| 2026-11-28 | Arthur | Modern, responsive design (`design/modern-ui`): top bar, hero, panels, alert-colour lines, effects, empty-state tiles and example link; ratio table columns sized so notes are never cut. End-to-end run on the real cached AAPL, MSFT, NKE, offline | 3 new tests (385 passed), 4 deliberate bugs caught; screenshots at 4 widths; 2 layout mistakes seen on screenshots and fixed | Arthur's look pending |
 | 2026-11-28 | Maiwenn | Slice 7 documents: root `README.md` (install, run, data, flags, known limitations) and this file, merged from `docs/ai-log/` (details: `docs/ai-log/docs-slice-7-readme-ai-usage.md`) | Every fact checked against `docs/product.md`, `plan.md`, `thresholds.toml`, the AI logs and the screen labels in the code; fresh-copy test (new Python 3.12 environment, install, 375 tests passed, app started on localhost); no secret found in the files | To be read by the team |
 
 ## AI mistakes and how they were caught
@@ -82,4 +84,4 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 | 5 | A 5-year calendar window instead of the "5 most recent fiscal years present" | Code and test reviewer agents, second round of PR #16 |
 | 5 | A broad `except Exception` on the page could hide a test that reached the internet | Code and test reviewer agents, second round; the test helper now refuses an "Unexpected problem" box |
 | 6 | Three display mistakes in the charts (minus sign cut off, label overlap, grey notes on a dark page) | Only seen on screenshots, not by the tests; a test now covers the first one |
-| Design | A blank first screenshot; a top padding that barely moved the title; a style sheet added with `st.html` that Chrome ignored | All three seen by looking at the screenshots or the page in Chrome |
+| Design | A blank first screenshot; a top padding that barely moved the title; a style sheet added with `st.html` that Chrome ignored; a card width rule on the wrong box that cut the cards at the bottom; charts side by side that cut the trend chart's "n/a" notes | All seen by looking at the screenshots or the page in Chrome |

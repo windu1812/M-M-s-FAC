@@ -1,32 +1,254 @@
 /* CreditLens page style (loaded by streamlit_app.py). Only looks: no number is computed or changed here.
-   Selectors use Streamlit's data-testid attributes and the st-key-<key> class of keyed containers. */
+   Selectors use Streamlit's data-testid attributes and the st-key-<key> class of keyed containers.
+   Sections: 1 tokens, 2 Streamlit controls hidden, 3 page and fonts, 4 top bar, 5 hero, 6 search panel,
+   7 buttons and fields, 8 summary cards, 9 panels, tables and charts, 10 empty state, 11 motion, 12 small screens. */
 
-/* The system font of the computer (San Francisco on a Mac), clean and readable. Icons keep their own font. */
-.stApp, .stApp p, .stApp li, .stApp label, .stApp input, .stApp button, .stApp h1, .stApp h2, .stApp h3,
-.stApp [data-testid="stMarkdownContainer"] {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+/* 1. Colours and sizes used below (the theme in .streamlit/config.toml has the same ones). */
+:root {
+    --cl-text: #1d1d1f;
+    --cl-muted: #515154;          /* 7.6:1 on white: readable small text */
+    --cl-blue: #0071e3;
+    --cl-blue-dark: #0058b0;
+    --cl-tile: #f5f5f7;
+    --cl-line: #e5e5ea;
+    --cl-green: #1e8e3e;
+    --cl-orange: #c25e00;
+    --cl-red: #d70015;
+    --cl-grey: #8e8e93;
+    --cl-radius: 20px;
+    --cl-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+    --cl-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.05), 0 16px 40px rgba(0, 0, 0, 0.10);
+    --cl-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-.stApp h1 { letter-spacing: -0.02em; }
-.stApp h2, .stApp h3 { letter-spacing: -0.01em; }
 
-/* Streamlit's own controls: the top bar (running status, file-change notice), its decoration line, the toolbars
+/* 2. Streamlit's own controls: the top bar (running status, file-change notice), its decoration line, the toolbars
    that appear over tables and charts, and the footer. The page shows only CreditLens. */
 [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"],
 [data-testid="stStatusWidget"], [data-testid="stElementToolbar"], footer {
     display: none !important;
 }
 
-/* Summary cards: light grey tiles with round corners, no border, all as tall as the tallest in their row. */
-.st-key-cards { align-items: stretch; }
-[class*="st-key-card_"] {
-    background: #f5f5f7;
-    border-radius: 18px;
-    padding: 1.1rem 1.25rem;
+/* 3. The system font of the computer (San Francisco on a Mac), clean and readable. Icons keep their own font. */
+.stApp, .stApp p, .stApp li, .stApp label, .stApp input, .stApp button, .stApp h1, .stApp h2, .stApp h3,
+.stApp [data-testid="stMarkdownContainer"] {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+.stApp h1 { letter-spacing: -0.03em; }
+.stApp h2, .stApp h3 { letter-spacing: -0.015em; }
 
-/* The page breathes on a large screen and keeps a margin on a small one. */
+/* A soft light at the top of the page, then white. */
+.stApp {
+    background:
+        radial-gradient(1200px 420px at 50% -120px, rgba(0, 113, 227, 0.10), rgba(0, 113, 227, 0) 70%),
+        #ffffff;
+}
+[data-testid="stMain"], [data-testid="stAppViewContainer"] { scroll-behavior: smooth; }
+
+/* The page breathes on a large screen and keeps a margin on a small one; room at the top for the fixed bar. */
 [data-testid="stMainBlockContainer"] {
     max-width: 1280px;
+    padding-top: 4.75rem !important;
     padding-left: clamp(1rem, 4vw, 3rem);
     padding-right: clamp(1rem, 4vw, 3rem);
 }
+/* Headings jump under the fixed bar, not behind it. */
+.stApp h2 { scroll-margin-top: 4.5rem; }
+
+/* 4. The top bar: frosted glass, always visible, with links to the sections once there are results. */
+.cl-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.cl-brand {
+    display: flex; align-items: center; gap: 0.55rem;
+    font-weight: 600; font-size: 1.05rem; letter-spacing: -0.01em; color: var(--cl-text);
+    white-space: nowrap;
+}
+.cl-logo {
+    width: 26px; height: 26px; border-radius: 8px; flex: none;
+    background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    display: grid; place-items: center; color: #fff; font-size: 0.8rem; font-weight: 700;
+}
+.cl-links { display: flex; gap: 0.25rem; overflow-x: auto; scrollbar-width: none; }
+.cl-links a, .cl-tag {
+    font-size: 0.85rem; color: var(--cl-muted) !important; text-decoration: none !important;
+    padding: 0.35rem 0.75rem; border-radius: 999px; white-space: nowrap;
+    transition: background 0.2s var(--cl-ease), color 0.2s var(--cl-ease);
+}
+.cl-links a:hover { background: rgba(0, 0, 0, 0.05); color: var(--cl-text) !important; }
+.cl-links a:focus-visible { outline: 2px solid var(--cl-blue); outline-offset: 2px; }
+.cl-tag { background: var(--cl-tile); }
+/* The bar is fixed: its own place in the page takes no room. */
+[data-testid="stElementContainer"]:has(.cl-nav) { position: absolute; height: 0; margin: 0; }
+
+/* 5. Hero: a big title with a gradient, an eyebrow above it and a short line under it. */
+.cl-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--cl-blue);
+}
+.stApp h1 {
+    font-size: clamp(2.4rem, 5vw, 3.5rem) !important;
+    line-height: 1.05 !important;
+    background: linear-gradient(90deg, #1d1d1f 0%, #1d1d1f 45%, #0071e3 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 0 0 0.6rem !important;
+}
+.st-key-hero { margin-bottom: 0.75rem; }
+.st-key-hero [data-testid="stCaptionContainer"] p { font-size: clamp(1rem, 1.6vw, 1.2rem); color: var(--cl-muted); }
+
+/* 6. The search panel: one white card with a soft shadow holding the tickers, Run and the debt definition. */
+.st-key-search {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--cl-line);
+    border-radius: 24px;
+    padding: 1.1rem 1.35rem 1.2rem;
+    box-shadow: var(--cl-shadow);
+}
+
+/* 7. Buttons and fields: pill shapes, a clear blue focus ring, small lifts on hover. */
+.stApp [data-testid="stTextInputRootElement"] {
+    border-radius: 14px;
+    transition: box-shadow 0.2s var(--cl-ease), border-color 0.2s var(--cl-ease);
+}
+.stApp [data-testid="stTextInputRootElement"]:focus-within {
+    border-color: var(--cl-blue) !important;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.18);
+}
+.stApp button {
+    transition: transform 0.15s var(--cl-ease), box-shadow 0.2s var(--cl-ease), background-color 0.2s var(--cl-ease);
+}
+.stApp button[kind="primaryFormSubmit"], .stApp button[kind="primary"] {
+    box-shadow: 0 4px 14px rgba(0, 113, 227, 0.30);
+}
+.stApp button[kind="primaryFormSubmit"]:hover, .stApp button[kind="primary"]:hover {
+    background: var(--cl-blue-dark) !important; border-color: var(--cl-blue-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(0, 113, 227, 0.35);
+}
+.stApp button:active { transform: translateY(0) scale(0.98); }
+.st-key-search [data-testid="stButtonGroup"] button { border-radius: 999px !important; }
+.stApp button:focus-visible { outline: 2px solid var(--cl-blue) !important; outline-offset: 2px; }
+
+/* 8. Summary cards: grey tiles that share the row and wrap (at least 13 rem each), a coloured line on top for the
+   alert (the word is always written too), a small lift on hover. */
+.st-key-cards { align-items: stretch; }
+.st-key-cards > div {  /* the box around each card in the row: it sets the width */
+    flex: 1 1 13rem !important;  /* 5 cards still fit in one row on a 1280 px laptop (V1) */
+    min-width: min(13rem, 100%) !important;
+    max-width: 30rem;
+}
+[class*="st-key-card_"] {
+    flex: 1 1 auto !important;  /* as tall as the tallest card of its row */
+    background: var(--cl-tile);
+    border-radius: var(--cl-radius);
+    padding: 1.15rem 1.3rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s var(--cl-ease), box-shadow 0.25s var(--cl-ease), background 0.25s var(--cl-ease);
+}
+[class*="st-key-card_"]::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--cl-grey);
+}
+[class*="st-key-card_green_"]::before { background: var(--cl-green); }
+[class*="st-key-card_orange_"]::before { background: var(--cl-orange); }
+[class*="st-key-card_red_"]::before { background: var(--cl-red); }
+[class*="st-key-card_"]:hover {
+    transform: translateY(-4px);
+    background: #ffffff;
+    box-shadow: var(--cl-shadow-hover);
+}
+[class*="st-key-card_"] [data-testid="stMarkdownContainer"] p { margin-bottom: 0.15rem; }
+[class*="st-key-card_"] [data-testid="stMarkdownContainer"]:first-of-type strong { font-size: 1.08rem; }
+
+/* 9. Panels for the charts and the ratio table: white, a thin line and round corners. */
+.st-key-panel_charts, .st-key-panel_table {
+    background: #ffffff;
+    border: 1px solid var(--cl-line);
+    border-radius: 24px;
+    padding: 1.25rem 1.4rem 1.4rem;
+    box-shadow: var(--cl-shadow);
+}
+.st-key-chart_tools { align-items: flex-end; }
+[data-testid="stPlotlyChart"] { border-radius: 16px; overflow: hidden; }
+[data-testid="stDataFrame"] {
+    border-radius: 14px; overflow: hidden; border: 1px solid var(--cl-line);
+}
+[data-testid="stExpander"] details {
+    border-radius: 16px !important; border-color: var(--cl-line) !important; background: #ffffff;
+}
+[data-testid="stExpander"] summary:hover { color: var(--cl-blue); }
+[data-testid="stAlert"] { border-radius: 14px; }
+
+/* 10. Empty state: three small tiles that say what the screen gives. */
+.cl-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.9rem;
+    margin-top: 0.5rem;
+}
+.cl-feature {
+    background: var(--cl-tile);
+    border-radius: var(--cl-radius);
+    padding: 1.1rem 1.25rem;
+    transition: transform 0.25s var(--cl-ease), box-shadow 0.25s var(--cl-ease), background 0.25s var(--cl-ease);
+}
+.cl-feature:hover { transform: translateY(-3px); background: #ffffff; box-shadow: var(--cl-shadow-hover); }
+.cl-feature b { display: block; font-size: 1rem; margin-bottom: 0.25rem; color: var(--cl-text); }
+.cl-feature span { font-size: 0.9rem; color: var(--cl-muted); line-height: 1.45; }
+.cl-dots { display: inline-flex; gap: 0.3rem; margin-bottom: 0.6rem; }
+.cl-dots i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.cl-footer {
+    margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--cl-line);
+}
+
+/* 11. Motion: the cards and panels rise in gently, one after the other. Off for people who ask for less motion. */
+@keyframes cl-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+[class*="st-key-card_"], .st-key-panel_charts, .st-key-panel_table, .st-key-search, .cl-feature {
+    animation: cl-rise 0.55s var(--cl-ease) both;
+}
+.st-key-cards > div:nth-child(2) [class*="st-key-card_"] { animation-delay: 0.06s; }
+.st-key-cards > div:nth-child(3) [class*="st-key-card_"] { animation-delay: 0.12s; }
+.st-key-cards > div:nth-child(4) [class*="st-key-card_"] { animation-delay: 0.18s; }
+.st-key-cards > div:nth-child(5) [class*="st-key-card_"] { animation-delay: 0.24s; }
+.cl-feature:nth-child(2) { animation-delay: 0.08s; }
+.cl-feature:nth-child(3) { animation-delay: 0.16s; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* 12. Small screens (phone): tighter panels, the bar keeps only the brand and the links. */
+@media (max-width: 640px) {
+    .cl-tag { display: none; }
+    .cl-nav { padding: 0 0.75rem; }
+    .cl-links a { padding: 0.35rem 0.55rem; }
+    .st-key-search, .st-key-panel_charts, .st-key-panel_table { padding: 0.9rem 0.95rem 1rem; border-radius: 20px; }
+    .st-key-cards > div { max-width: none; }
+}
+
+/* The "Try AAPL, MSFT, NKE" link of the empty state: blue, so it reads as something to click. */
+.st-key-example button, .st-key-example button p { color: var(--cl-blue) !important; font-weight: 500; }
+.st-key-example button:hover p { text-decoration: underline; }
+
+/* Once there are results, the hero gets small, so the summary cards stay on the first screen (1280 × 800). */
+.stApp:has(.st-key-cards) .cl-eyebrow { display: none; }
+.stApp:has(.st-key-cards) .stApp h1, .stApp:has(.st-key-cards) h1 { font-size: clamp(1.9rem, 3vw, 2.3rem) !important; }
+.stApp:has(.st-key-cards) .st-key-hero { margin-bottom: 0.25rem; }
+.stApp:has(.st-key-cards) .st-key-hero [data-testid="stCaptionContainer"] p { font-size: 1rem; }
+.stApp:has(.st-key-cards) .st-key-search { padding: 0.8rem 1.35rem 0.9rem; }
