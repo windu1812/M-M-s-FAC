@@ -119,6 +119,17 @@
     box-shadow: var(--cl-shadow);
 }
 
+/* The two groups of the search panel: the tickers take the free room (at least 20 rem), the debt definition its own
+   width; when both do not fit, the debt definition goes to the next line. Run keeps the width of its word. */
+.st-key-search > div:has(.st-key-search_tickers) { flex: 1 1 20rem !important; min-width: min(20rem, 100%) !important; }
+.st-key-search > div:has(.st-key-search_debt) { flex: 0 1 auto !important; max-width: 100%; }
+.st-key-field_row { flex-wrap: nowrap !important; }  /* Run always next to the field */
+.st-key-field_row > div:has([data-testid="stTextInput"]) { flex: 1 1 0 !important; min-width: 0; }
+.st-key-run button { padding-left: 1.6rem; padding-right: 1.6rem; white-space: nowrap; }
+/* A debt choice is never cut with "...": in a very narrow window its text goes on two lines. */
+.st-key-search [data-testid="stButtonGroup"] button:has(p) p { white-space: normal; overflow: visible; text-overflow: clip; }
+.st-key-search [data-testid="stButtonGroup"] button:has(p) { height: auto !important; min-height: 2.4rem; }
+
 /* 7. Buttons and fields: pill shapes, a clear blue focus ring, small lifts on hover. */
 .stApp [data-testid="stTextInputRootElement"] {
     border-radius: 14px;
@@ -140,7 +151,7 @@
     box-shadow: 0 8px 22px rgba(0, 113, 227, 0.35);
 }
 .stApp button:active { transform: translateY(0) scale(0.98); }
-.st-key-search [data-testid="stButtonGroup"] button { border-radius: 999px !important; }
+.st-key-search [data-testid="stButtonGroup"] button:has(p) { border-radius: 999px !important; }
 .stApp button:focus-visible { outline: 2px solid var(--cl-blue) !important; outline-offset: 2px; }
 
 /* 8. Summary cards: grey tiles that share the row and wrap (at least 13 rem each), a coloured line on top for the

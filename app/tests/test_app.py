@@ -463,21 +463,23 @@ def test_cache_date_lists_only_the_companies_shown(cache):
 # --- Compact layout (design of 2026-11-28) -------------------------------------------------------------
 
 
-def test_inputs_are_on_one_row(cache):
-    """The ticker field, Run and the debt definition sit side by side, so the cards are visible without scrolling."""
+def test_inputs_are_on_one_row_that_wraps_instead_of_cutting_text(cache):
+    """The ticker field, Run and the debt definition sit side by side when there is room, so the cards are visible
+    without scrolling; in a narrower window the row wraps (the debt definition goes under the field) instead of
+    squeezing fixed columns, which cut "Run" to "R..." and the leases option at about 700 px (bug of 2026-11-28)."""
     at = start()
 
-    def blocks(node):  # every block of the page, at any depth (the row is inside the search panel)
+    def blocks(node):  # every block of the page, at any depth
         for child in getattr(node, "children", {}).values():
             yield child
             yield from blocks(child)
 
-    rows = [b for b in blocks(at.main) if [type(c).__name__ for c in getattr(b, "children", {}).values()]
-            == ["Column", "Column"]]  # st.columns: one row
-    row = rows[0]
-    keys = [w.key for w in row.get("text_input") + row.get("button") + row.get("button_group")]
+    search = [b for b in at.main.get("flex_container") if getattr(b.proto.flex_container, "wrap", False)
+              and b.get("text_input") and b.get("button_group")]
+    assert search, "the inputs are not in a row that wraps"
+    keys = [w.key for w in search[0].get("text_input") + search[0].get("button") + search[0].get("button_group")]
     assert keys == ["tickers", "run", "incl_leases"]
-
+    assert not [b for b in blocks(search[0]) if type(b).__name__ == "Column"]  # no fixed-ratio columns
 
 def test_results_line_and_cache_date_come_before_the_cards(cache):
     at = run("ALFA")

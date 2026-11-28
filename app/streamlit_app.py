@@ -228,21 +228,20 @@ with st.container(key="hero", gap="xxsmall"):
 
 # The search panel, one row: the tickers, Run and the debt definition, aligned, so the cards fit on the first
 # screen. In a narrow window (phone) the columns go one under the other.
-search = st.container(key="search")
-input_column, debt_column = search.columns([1.1, 1], vertical_alignment="top")  # labels on the same line
-with input_column:
+# A row that wraps, not fixed columns: when the window is too narrow for both groups, the debt definition goes under
+# the field instead of squeezing it (fixed columns cut "Run" to "R..." at about 700 px). style.css sets the widths.
+search = st.container(key="search", horizontal=True, wrap=True, gap="medium", vertical_alignment="top")
+with search.container(key="search_tickers"):
     # A form, so that Enter in the field runs the screen like the Run button does.
     with st.form("ticker_form", border=False):
-        field_column, run_column = st.columns([5, 1], vertical_alignment="bottom")
-        with field_column:
+        with st.container(horizontal=True, vertical_alignment="bottom", gap="small", key="field_row"):
             st.text_input(
                 "Tickers (1 to 5 US companies, separated by commas)",
                 placeholder=EXAMPLE_TICKERS,
                 key="tickers",
             )
-        with run_column:
-            run_clicked = st.form_submit_button("Run", type="primary", key="run", width="stretch")
-with debt_column:  # outside the form: switching it redraws at once, without Run
+            run_clicked = st.form_submit_button("Run", type="primary", key="run", width="content")  # never cut
+with search.container(key="search_debt", width="content"):  # outside the form: redraws at once, without Run
     incl_leases = st.segmented_control(  # both choices visible, the same height as the ticker field
         "Debt definition",
         options=[False, True],
