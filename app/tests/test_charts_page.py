@@ -137,7 +137,7 @@ def test_debt_selector_switches_the_charts_and_keeps_the_chosen_ratio(cache):
     at = run("ALFA, BETA")
     assert bars(at)["values"]["ALFA (FY2026)"] == pytest.approx(1.42)  # CALC4a
 
-    at.radio(key=DEBT_SELECTOR).set_value(True).run()
+    at.segmented_control(key=DEBT_SELECTOR).set_value(True).run()
 
     assert at.selectbox(key=RATIO_SELECTOR).value == "net_debt_to_ebitda"
     assert bars(at)["axis"] == "Net debt / EBITDA, incl. leases (x)"
@@ -148,7 +148,7 @@ def test_a_ratio_without_debt_does_not_change_with_the_debt_selector(cache):
     at = run("ALFA, BETA")
     at.selectbox(key=RATIO_SELECTOR).select("interest_coverage").run()
 
-    at.radio(key=DEBT_SELECTOR).set_value(True).run()
+    at.segmented_control(key=DEBT_SELECTOR).set_value(True).run()
 
     assert at.selectbox(key=RATIO_SELECTOR).value == "interest_coverage"
     assert bars(at)["axis"] == "Interest coverage (x)"
@@ -183,7 +183,7 @@ def test_excel_summary_follows_the_debt_selector(cache, excel_files):
     """AC5b: the Summary sheet uses the selected debt definition; the Ratios sheet always has both."""
     at = run("ALFA, BETA")
 
-    at.radio(key=DEBT_SELECTOR).set_value(True).run()
+    at.segmented_control(key=DEBT_SELECTOR).set_value(True).run()
 
     workbook = load_workbook(BytesIO(excel_files[-1]))
     summary = workbook["Summary"]

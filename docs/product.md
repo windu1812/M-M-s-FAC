@@ -22,6 +22,9 @@ Status: agreed on 2026-11-20 (Arthur, for the team)
 ## Screens and visuals
 
 Look: one dashboard page with summary cards, charts and a table. Used on a phone: **no** (laptop only).
+Layout (agreed on 2026-11-28): the ticker field, Run and the debt definition (two buttons) on one aligned row;
+"Results for" and the cache date in small text under it; then the summary cards, visible without scrolling on a
+1280 × 800 laptop screen.
 Visual reference: a bank credit sheet. It is sober, with a white background and a dense table, and colour is used
 only for the flags.
 

@@ -13,3 +13,7 @@ address = "localhost"
 base = "light"
 # Buttons and selectors in a neutral dark blue: on the page, red, orange and green mean flags only.
 primaryColor = "#1f4e79"
+# A compact top of page, so the summary cards fit on the first screen of a laptop (default 6rem).
+paddingTop = "1rem"  # Streamlit adds the height of its toolbar above it
+# Smaller headings than Streamlit's defaults (h1, h2, h3), for a sober, dense credit sheet.
+headingFontSizes = ["2rem", "1.4rem", "1.15rem"]

@@ -78,7 +78,7 @@ def test_page_starts_and_shows_the_empty_state():
     assert at.text_input(key="tickers").value == ""
     assert at.button(key="run").label == "Run"
     assert "AAPL, MSFT, NKE" in at.markdown[0].value
-    assert at.radio(key="incl_leases").value is False  # "Financial debt only" is the default
+    assert at.segmented_control(key="incl_leases").value is False  # "Financial debt only" is the default
     assert not at.error
 
 
@@ -120,7 +120,7 @@ def test_cards_show_the_ratios_changes_and_overall_alert(cache):
     assert ":orange-background[:orange[**Orange: 1 orange flag**]]" in text  # word and colour (AC7)
     # BETA: current ratio 0.80 and FCF -150 red; ND/EBITDA, coverage, margin not available (AC7)
     assert ":red-background[:red[**Red: 2 red flags, 3 not available**]]" in text
-    assert "Interest coverage (x)  \n**not available**" in text
+    assert "Interest coverage (x): **not available**" in text
     assert "interest expense not reported" in text  # the reason, under the value
 
 
@@ -176,7 +176,7 @@ def test_debt_selector_switches_cards_and_table_without_downloading_again(cache,
     calls = []
     original = sec_client.fetch_json
     monkeypatch.setattr(sec_client, "fetch_json", lambda *a, **k: calls.append(a) or original(*a, **k))
-    at.radio(key="incl_leases").set_value(True).run()
+    at.segmented_control(key="incl_leases").set_value(True).run()
     assert not at.exception
 
     after = table(at, "ratio_table").set_index("Metric")
@@ -188,7 +188,7 @@ def test_debt_selector_switches_cards_and_table_without_downloading_again(cache,
     for metric in ["EBITDA", "Interest coverage", "Current ratio", "EBITDA margin", "Free cash flow"]:
         assert after.loc[metric, "FY2026"] == before.loc[metric, "FY2026"]
     text = page_text(at)
-    assert "Net debt / EBITDA, incl. leases (x)  \n**2.00x**" in text  # the card switched too, with its unit
+    assert "Net debt / EBITDA, incl. leases (x): **2.00x**" in text  # the card switched too, with its unit
     assert "Including leases and short-term borrowings" in text
     assert calls == []  # only the stored result is redrawn
 
@@ -410,7 +410,7 @@ def test_alert_on_the_card_switches_with_the_debt_definition(cache):
     at = run("GAMA")
     assert ":green-background[:green[**Green: 6 green flags**]]" in page_text(at)
 
-    at.radio(key="incl_leases").set_value(True).run()
+    at.segmented_control(key="incl_leases").set_value(True).run()
 
     assert ":orange-background[:orange[**Orange: 2 orange flags**]]" in page_text(at)
     assert "**2.50x** · :orange[orange]" in page_text(at)  # (1,500 + 1,000) / 1,000
@@ -420,7 +420,7 @@ def test_not_meaningful_is_shown_on_the_card_and_in_the_table(cache):
     at = run("NEGA")
 
     assert ":red-background[:red[**Red: 2 red flags, 2 not meaningful**]]" in page_text(at)
-    assert "Net debt / EBITDA (x)  \n**not meaningful**" in page_text(at)
+    assert "Net debt / EBITDA (x): **not meaningful**" in page_text(at)
     nega = table(at, "ratio_table").set_index("Metric")
     assert nega.loc["Debt / equity", "FY2026"] == "not meaningful"
 
@@ -457,3 +457,36 @@ def test_cache_date_lists_only_the_companies_shown(cache):
 
     saved = [c.value for c in at.caption if "saved in the local cache" in c.value]
     assert saved and all(line.endswith("(ALFA).") for line in saved)
+
+
+
+# --- Compact layout (design of 2026-11-28) -------------------------------------------------------------
+
+
+def test_inputs_are_on_one_row(cache):
+    """The ticker field, Run and the debt definition sit side by side, so the cards are visible without scrolling."""
+    at = start()
+
+    row = at.main.children[2]  # after the title and its caption
+    assert [type(c).__name__ for c in row.children.values()] == ["Column", "Column"]  # st.columns: one row
+    keys = [w.key for w in row.get("text_input") + row.get("button") + row.get("button_group")]
+    assert keys == ["tickers", "run", "incl_leases"]
+
+
+def test_results_line_and_cache_date_come_before_the_cards(cache):
+    at = run("ALFA")
+
+    captions = [c.value for c in at.caption]
+    results = next(i for i, c in enumerate(captions) if c.startswith("Results for: **ALFA**"))
+    saved = next(i for i, c in enumerate(captions) if "saved in the local cache" in c)
+    assert saved == results + 1  # the two small lines together, under the inputs
+    assert at.header[0].value == "Summary"
+
+
+def test_progress_box_is_removed_when_every_company_loaded(cache):
+    """The box is useful while loading and when something failed; after a clean run the "Results for" line
+    says the same, so the box goes and the cards move up."""
+    at = run("ALFA, BETA")
+
+    assert not at.status
+    assert "Results for: **ALFA, BETA**" in page_text(at)
