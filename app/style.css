@@ -254,6 +254,8 @@
 /* 12. Small screens (phone): tighter panels, the bar keeps only the brand and the links. */
 @media (max-width: 640px) {
     .cl-tag { display: none; }
+    .st-key-search_debt, .st-key-search > div:has(.st-key-search_debt) { width: 100%; }
+    .st-key-search [data-testid="stButtonGroup"] button:has(p) { width: 100%; }  /* the two choices, same width */
     .cl-nav { padding: 0 0.75rem; }
     .cl-links a { padding: 0.35rem 0.55rem; }
     .st-key-search, .st-key-panel_charts, .st-key-panel_table { padding: 0.9rem 0.95rem 1rem; border-radius: 20px; }

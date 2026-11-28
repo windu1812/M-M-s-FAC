@@ -395,7 +395,7 @@ def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = 
         alert_text=alert.text,
         alert_note=(f"Alert on all {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} (see the table)."
                     if alert.level else  # "N/A": say why the company is not rated
-                    f"Not rated: too few of the {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} have a value "
+                    f"Not rated: too few of the {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} can be rated "
                     "(see the table)."),
         headlines=headlines,
     )

@@ -456,6 +456,15 @@ def test_overall_alert_orange_with_three_not_available_is_na(thresholds):
     assert alert.text == "N/A: 3 not available, 1 orange flag, 2 green flags"
 
 
+def test_overall_alert_orange_with_two_not_available_stays_orange(thresholds):
+    """CALC16: D/E 1.5 is orange; with only 2 not available the company is rated: "Orange"."""
+    rows = company_with({"interest_coverage": "not available", "ebitda_margin": "not available"})
+    rows.loc[rows["metric"] == "debt_to_equity", "value"] = 1.5
+    alert = flags.overall_alert(flags.apply_flags(rows, thresholds), "ONE")
+    assert alert.level == "orange"
+    assert alert.text == "Orange: 1 orange flag, 2 not available"
+
+
 def test_overall_alert_without_any_flag_and_few_not_available_is_na(thresholds):
     """CALC16: nothing could be flagged (2 not available, 4 not meaningful): "N/A", as before it was "No flag"."""
     statuses = {"net_debt_to_ebitda": "not available", "interest_coverage": "not available"}

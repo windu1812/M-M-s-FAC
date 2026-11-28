@@ -93,7 +93,8 @@ of PR #19):**
 With 1 or 2 "not available", the alert is rated on the other ratios. "Not available" ratios do not count as red, but
 the card shows how many there are; an "N/A" alert still counts the flags that exist ("N/A: 3 not available, 3 green
 flags") and its card says "Not rated: too few of the 6 flagged ratios of FY… have a value". "Not meaningful" does not
-count as "not available".
+count as "not available". A rated alert counts only the flags of its own colour ("Red: 1 red flag, 3 not available");
+an "N/A" alert counts every orange and green flag, since it has no colour of its own.
 
 CALC16 (rule above; the ratios of company ONE are green when available: ND/EBITDA 1.0 ≤ 2.0, D/E 0.5 ≤ 1.0,
 coverage 10.0 ≥ 6.0, current ratio 2.0 ≥ 1.5, margin 25.0 ≥ 20, FCF 100 ≥ 0):
@@ -103,11 +104,13 @@ coverage 10.0 ≥ 6.0, current ratio 2.0 ≥ 1.5, margin 25.0 ≥ 20, FCF 100 �
 - 3 not available and current ratio 0.5 (< 1.0, red) → red wins → "Red: 1 red flag, 3 not available";
 - 3 not available and D/E 1.5 (> 1.0 and ≤ 2.0, orange) → no red, 3 > 2 → "N/A: 3 not available, 1 orange flag,
   2 green flags";
+- 2 not available and D/E 1.5 (orange) → no red, 2 ≤ 2, rated → "Orange: 1 orange flag, 2 not available";
 - 2 not available and 4 not meaningful → nothing flagged → "N/A: 2 not available, 4 not meaningful".
 
 Tests: `test_overall_alert_one_or_two_not_available_keep_the_rule`, `test_overall_alert_three_not_available_is_na`,
 `test_overall_alert_not_meaningful_does_not_count_as_not_available`, `test_overall_alert_red_stays_red_with_three_not_available`,
-`test_overall_alert_orange_with_three_not_available_is_na`, `test_overall_alert_without_any_flag_and_few_not_available_is_na`.
+`test_overall_alert_orange_with_three_not_available_is_na`, `test_overall_alert_orange_with_two_not_available_stays_orange`,
+`test_overall_alert_without_any_flag_and_few_not_available_is_na`.
 
 **Known answers of the SAMPLE DATA companies (dashboard tests).** Fictional companies of
 `app/tests/synthetic_company.py`, worked out by hand (USD m). The example company above is ALFA's FY2026; the other

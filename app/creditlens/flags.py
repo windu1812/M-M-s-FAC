@@ -46,7 +46,7 @@ DEFAULT_THRESHOLDS_PATH = Path(__file__).resolve().parent.parent / "config" / "t
 GREEN = "green"
 ORANGE = "orange"
 RED = "red"
-NO_FLAG = ""
+NO_FLAG = ""  # no flag on a row; as an overall alert level it means "N/A" (not rated)
 
 # Team decisions of 2026-11-28: with 3 or more of the 6 flagged ratios "not available", a company cannot be rated,
 # and its overall alert is "N/A", unless a red flag is known (red is never hidden). With 1 or 2 not available, the

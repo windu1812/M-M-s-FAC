@@ -481,6 +481,7 @@ def test_inputs_are_on_one_row_that_wraps_instead_of_cutting_text(cache):
     assert keys == ["tickers", "run", "incl_leases"]
     assert not [b for b in blocks(search[0]) if type(b).__name__ == "Column"]  # no fixed-ratio columns
 
+
 def test_results_line_and_cache_date_come_before_the_cards(cache):
     at = run("ALFA")
 

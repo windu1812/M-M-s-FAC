@@ -456,7 +456,7 @@ def test_na_card_says_why_it_is_not_rated(alfa_beta):
     not_rated = dataclasses.replace(flags.overall_alert(flagged, "BETA"), level="",
                                     text="N/A: 3 not available, 1 green flag")
     card = display.summary_card(table, "BETA", not_rated)
-    assert card.alert_note == ("Not rated: too few of the 6 flagged ratios of FY2026 have a value "
+    assert card.alert_note == ("Not rated: too few of the 6 flagged ratios of FY2026 can be rated "
                                "(see the table).")
 
 
