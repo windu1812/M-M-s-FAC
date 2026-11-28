@@ -43,6 +43,12 @@
         #ffffff;
 }
 [data-testid="stMain"], [data-testid="stAppViewContainer"] { scroll-behavior: smooth; }
+/* Anything scrolled to (a section link, a control reached with Tab) stops below the fixed bar, not behind it. */
+[data-testid="stMain"], [data-testid="stAppViewContainer"] { scroll-padding-top: 4.5rem; }
+
+/* Small grey texts (captions): Streamlit fades them to 60 %, which is below the 4.5:1 contrast for small text.
+   Full opacity with the muted grey gives about 7.6:1. */
+.stApp [data-testid="stCaptionContainer"] { opacity: 1; color: var(--cl-muted); }
 
 /* The page breathes on a large screen and keeps a margin on a small one; room at the top for the fixed bar. */
 [data-testid="stMainBlockContainer"] {
@@ -100,6 +106,7 @@
     color: var(--cl-blue);
 }
 .stApp h1 {
+    display: inline-block;  /* the gradient spans the word, so its blue end shows */
     font-size: clamp(2.4rem, 5vw, 3.5rem) !important;
     line-height: 1.05 !important;
     background: linear-gradient(90deg, #1d1d1f 0%, #1d1d1f 45%, #0071e3 100%);
@@ -232,7 +239,7 @@
     to { opacity: 1; transform: translateY(0); }
 }
 [class*="st-key-card_"], .st-key-panel_charts, .st-key-panel_table, .st-key-search, .cl-feature {
-    animation: cl-rise 0.55s var(--cl-ease) both;
+    animation: cl-rise 0.55s var(--cl-ease) backwards;  /* "backwards": after rising, hover can lift the card */
 }
 .st-key-cards > div:nth-child(2) [class*="st-key-card_"] { animation-delay: 0.06s; }
 .st-key-cards > div:nth-child(3) [class*="st-key-card_"] { animation-delay: 0.12s; }
@@ -259,7 +266,12 @@
 
 /* Once there are results, the hero gets small, so the summary cards stay on the first screen (1280 × 800). */
 .stApp:has(.st-key-cards) .cl-eyebrow { display: none; }
-.stApp:has(.st-key-cards) .stApp h1, .stApp:has(.st-key-cards) h1 { font-size: clamp(1.9rem, 3vw, 2.3rem) !important; }
+.stApp:has(.st-key-cards) h1 { font-size: clamp(1.9rem, 3vw, 2.3rem) !important; }
 .stApp:has(.st-key-cards) .st-key-hero { margin-bottom: 0.25rem; }
 .stApp:has(.st-key-cards) .st-key-hero [data-testid="stCaptionContainer"] p { font-size: 1rem; }
 .stApp:has(.st-key-cards) .st-key-search { padding: 0.8rem 1.35rem 0.9rem; }
+
+/* High-contrast mode (Windows): no gradient text, the title keeps the system text colour. */
+@media (forced-colors: active) {
+    .stApp h1 { -webkit-text-fill-color: currentColor; background: none; }
+}

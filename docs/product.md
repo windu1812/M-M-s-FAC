@@ -30,8 +30,8 @@ sections, a hero title that gets small once there are results, the inputs in one
 their alert colour on top (the alert word is always written), the charts and the table in white panels, small
 rise-in and hover effects (off when the computer asks for less motion), and on the first visit three tiles saying
 what the screen gives and a "Try AAPL, MSFT, NKE" link.
-Visual reference: a bank credit sheet. It is sober, with a white background and a dense table, and colour is used
-only for the flags.
+Visual reference: a bank credit sheet. It is sober, with a white background and a dense table; colour carries meaning
+only for the flags (the blue of the title, logo and buttons is decorative, one accent).
 
 | Screen | Purpose | The user sees first | Cards / charts / tables | The user can | Loading / empty / error |
 |---|---|---|---|---|---|
