@@ -50,6 +50,20 @@ class SecUnavailableError(RuntimeError):
     """
 
 
+class NoFinancialDataError(LookupError):
+    """Raised when the SEC answers 404: it has no such file (no XBRL financial data).
+
+    This is not an outage, so it is not a :class:`SecUnavailableError`.
+    """
+
+
+class CacheFileError(RuntimeError):
+    """Raised when a file of the local cache cannot be read (cut or damaged).
+
+    The message names the file to delete; the next run downloads it again.
+    """
+
+
 class RateLimiter:
     """Make sure two requests are never closer than ``min_interval`` seconds.
 
@@ -116,8 +130,14 @@ def fetch_json(url: str, cache_file: Path, refresh: bool = False) -> dict:
             is written to the cache in that case.
     """
     if cache_file.exists() and not refresh:
-        with cache_file.open(encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with cache_file.open(encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise CacheFileError(
+                f"The saved SEC file {cache_file.name} in the app/cache folder is damaged. "
+                "Delete it and click Run again (the internet is needed to download it again)."
+            ) from error
 
     headers = {"User-Agent": get_user_agent(), "Accept-Encoding": "gzip, deflate"}
     _rate_limiter.wait()
@@ -126,6 +146,12 @@ def fetch_json(url: str, cache_file: Path, refresh: bool = False) -> dict:
         response.raise_for_status()
         data = response.json()
     except requests.RequestException as error:
+        if isinstance(error, requests.HTTPError) and error.response is not None \
+                and error.response.status_code == 404:
+            raise NoFinancialDataError(
+                f"SEC EDGAR has no XBRL financial data for this company ({urlparse(url).netloc} answered "
+                "HTTP 404). It may be a fund, or a company that files no financial statements in XBRL."
+            ) from error
         raise SecUnavailableError(_explain_download_error(url, error)) from error
 
     # Write to a temporary file first so an interrupted run never leaves a
@@ -180,7 +206,10 @@ def get_cik(ticker: str, refresh: bool = False) -> str:
     for entry in tickers.values():
         if entry["ticker"].upper() == wanted:
             return f"{int(entry['cik_str']):010d}"
-    raise TickerNotFoundError(f"Ticker '{ticker}' was not found in the SEC ticker list.")
+    raise TickerNotFoundError(
+        f"'{ticker}' is not in the SEC ticker list. Check the spelling: only companies that file reports "
+        "with the SEC are covered (for example BRK-B for Berkshire Hathaway class B)."
+    )
 
 
 def get_company_facts(cik: str, refresh: bool = False) -> dict:

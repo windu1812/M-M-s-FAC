@@ -179,7 +179,8 @@ def parse_tickers(raw: str) -> tuple[list[str], str]:
     """Read the ticker field.
 
     Tickers are separated by commas or spaces, written in capitals, and given
-    only once each (in the order typed).
+    only once each (in the order typed). A dot is read as a dash, as in the
+    SEC list: "BRK.B" and "BRK-B" are the same company.
 
     Returns:
         ``(tickers, error)``: the list of tickers and an empty error, or an
@@ -188,7 +189,7 @@ def parse_tickers(raw: str) -> tuple[list[str], str]:
     """
     tickers: list[str] = []
     for part in re.split(r"[,;\s]+", raw or ""):
-        ticker = part.strip().upper()
+        ticker = part.strip().upper().replace(".", "-")
         if ticker and ticker not in tickers:
             tickers.append(ticker)
 

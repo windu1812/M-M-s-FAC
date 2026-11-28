@@ -34,7 +34,9 @@ ERROR_TITLES = {
     sec_client.TickerNotFoundError: "Ticker not found",
     sec_client.SecUnavailableError: "SEC EDGAR unreachable",
     sec_client.SecConfigError: "Settings missing",
-    fin.NoAnnualDataError: "No annual 10-K data for {ticker}",
+    sec_client.NoFinancialDataError: "No financial data on SEC EDGAR",
+    sec_client.CacheFileError: "Damaged cache file",
+    fin.NoAnnualDataError: "No annual 10-K data",
 }
 DATA_ERRORS = tuple(ERROR_TITLES)
 
@@ -55,26 +57,47 @@ def escape(text: str) -> str:
 # --- Fetching -------------------------------------------------------------------------------
 
 
+def plural(count: int, word: str) -> str:
+    """ "1 error", "2 errors", "1 company", "2 companies"."""
+    if count == 1:
+        return f"1 {word}"
+    return f"{count} {word[:-1]}ies" if word.endswith("y") else f"{count} {word}s"
+
+
 def fetch(tickers: list[str]) -> dict:
     """Get the 10-K data of each ticker; an error stops only its own ticker (V3)."""
     data, errors = {}, {}
-    with st.status(f"Fetching {len(tickers)} compan{'y' if len(tickers) == 1 else 'ies'} "
-                   "from SEC EDGAR...", expanded=True) as status:
+    with st.status(f"Loading {plural(len(tickers), 'company')} from SEC EDGAR or the local cache...",
+                   expanded=True) as status:
         for ticker in tickers:
             st.write(f"Fetching {ticker} from SEC EDGAR...")
             try:
                 company = fin.get_financials(ticker)
                 compute_ratios(company)  # a data problem (an amount not in USD) stops this ticker only
             except DATA_ERRORS as error:
-                errors[ticker] = (ERROR_TITLES[type(error)].format(ticker=ticker), str(error))
+                errors[ticker] = (ERROR_TITLES[type(error)], str(error))
                 continue
             except ValueError as error:
                 errors[ticker] = ("Data problem", str(error))
                 continue
+            except Exception as error:  # noqa: BLE001 - broad on purpose: one ticker must never stop the page (V3)
+                errors[ticker] = ("Unexpected problem", f"{type(error).__name__}: {error}")
+                continue
             data[ticker] = company
-        status.update(label=f"Fetched {len(data)} of {len(tickers)} from SEC EDGAR", state="complete",
-                      expanded=False)
+        label = f"Loaded {len(data)} of {plural(len(tickers), 'company')}"
+        if errors:
+            label += f"; {plural(len(errors), 'error')} (see below)"
+        status.update(label=label, state="complete" if data else "error", expanded=False)
     return {"tickers": tickers, "financials": data, "errors": errors, "cache_dates": cache_dates(list(data))}
+
+
+def grouped_errors(errors: dict[str, tuple[str, str]]) -> list[tuple[list[str], str, str]]:
+    """The errors to show: tickers with the same title and message share one box (for example "Settings
+    missing" for every ticker). Order of the first ticker is kept."""
+    groups: dict[tuple[str, str], list[str]] = {}
+    for ticker, (title, message) in errors.items():
+        groups.setdefault((title, message), []).append(ticker)
+    return [(tickers, title, message) for (title, message), tickers in groups.items()]
 
 
 def cache_dates(tickers: list[str]) -> dict[str, list[str]]:
@@ -134,12 +157,15 @@ st.caption("5-year credit screen of US companies, from their 10-K filings on SEC
 
 input_column, debt_column = st.columns([3, 2], vertical_alignment="bottom")
 with input_column:
-    st.text_input(
-        "Tickers (1 to 5 US companies, separated by commas)",
-        placeholder="AAPL, MSFT, NKE",
-        key="tickers",
-    )
-with debt_column:
+    # A form, so that Enter in the field runs the screen like the Run button does.
+    with st.form("ticker_form", border=False):
+        st.text_input(
+            "Tickers (1 to 5 US companies, separated by commas)",
+            placeholder="AAPL, MSFT, NKE",
+            key="tickers",
+        )
+        run_clicked = st.form_submit_button("Run", type="primary", key="run")
+with debt_column:  # outside the form: switching it redraws at once, without Run
     incl_leases = st.radio(
         "Debt definition",
         options=[False, True],
@@ -148,13 +174,12 @@ with debt_column:
         key="incl_leases",
         help="Including leases and short-term borrowings adds commercial paper and lease liabilities to debt.",
     )
-run_clicked = st.button("Run", type="primary", key="run")
 
 if run_clicked:
     tickers, input_error = display.parse_tickers(st.session_state["tickers"])
     if input_error:
         st.session_state.pop("result", None)
-        st.error(input_error)  # nothing is downloaded (AC2)
+        st.error(escape(input_error))  # nothing is downloaded (AC2); shown as typed
     else:
         st.session_state["result"] = fetch(tickers)
 
@@ -162,10 +187,13 @@ result = st.session_state.get("result")
 
 if result is None:
     if not run_clicked:
-        st.markdown("Enter 1 to 5 US tickers, for example **AAPL, MSFT, NKE**, then click **Run**.")
+        st.markdown("Enter 1 to 5 US tickers, for example **AAPL, MSFT, NKE**, then click **Run** "
+                    "(or press Enter).")
 else:
-    for ticker, (title, message) in result["errors"].items():
-        st.error(f"**{escape(ticker)}: {escape(title)}.** {escape(message)}")
+    st.markdown(f"Results for: **{escape(', '.join(result['tickers']))}** "
+                "(change the tickers and click Run to update)")
+    for tickers, title, message in grouped_errors(result["errors"]):
+        st.error(f"**{escape(', '.join(tickers))}: {escape(title)}.** {escape(message)}")
 
     if result["financials"]:
         try:

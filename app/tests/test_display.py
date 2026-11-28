@@ -89,6 +89,9 @@ def test_labels_of_both_debt_definitions():
         (" aapl,msft  nke ", ["AAPL", "MSFT", "NKE"]),
         ("AAPL, AAPL, msft", ["AAPL", "MSFT"]),  # each ticker once
         ("BRK-B", ["BRK-B"]),
+        ("BRK.B, brk-b", ["BRK-B"]),  # the SEC list uses a dash: the same company, fetched once
+        ("A, B, C, D, E", ["A", "B", "C", "D", "E"]),  # exactly 5 is accepted (AC2)
+        ("A, a, B, C, D, E", ["A", "B", "C", "D", "E"]),  # 5 once the duplicate is removed
     ],
 )
 def test_tickers_are_read_in_capitals_once_each(raw, expected):

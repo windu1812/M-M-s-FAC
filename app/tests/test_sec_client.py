@@ -229,6 +229,27 @@ def test_fetch_json_answer_that_is_not_json_raises_clear_error(
     assert not cache_file.exists()
 
 
+def test_fetch_json_404_says_the_sec_has_no_financial_data(monkeypatch, tmp_path, fast_rate_limiter):
+    # A 404 is not an outage: the SEC has no such file (for example a fund with no XBRL statements).
+    monkeypatch.setattr(
+        sec_client.requests, "get", lambda url, headers, timeout: FakeErrorResponse(404)
+    )
+    cache_file = tmp_path / "x.json"
+
+    with pytest.raises(sec_client.NoFinancialDataError, match="no XBRL financial data"):
+        sec_client.fetch_json("https://data.sec.gov/x.json", cache_file)
+    assert not cache_file.exists()
+
+
+def test_damaged_cache_file_raises_a_message_that_says_what_to_delete(tmp_path):
+    cache_file = tmp_path / "CIK0000000001.json"
+    cache_file.write_text('{"facts": ', encoding="utf-8")  # cut in the middle
+
+    with pytest.raises(sec_client.CacheFileError, match="CIK0000000001.json") as error:
+        sec_client.fetch_json("https://data.sec.gov/x.json", cache_file)
+    assert "Delete it" in str(error.value)
+
+
 def test_internet_block_of_the_tests_is_not_hidden(tmp_path):
     # conftest.py replaces requests.get by a function that raises RuntimeError.
     # That error must stay visible, never be turned into SecUnavailableError.
@@ -251,6 +272,11 @@ def test_get_cik_ignores_case_spaces_and_dot(tickers_in_cache):
 
 def test_get_cik_unknown_ticker_raises(tickers_in_cache):
     with pytest.raises(sec_client.TickerNotFoundError, match="ZZZZ"):
+        sec_client.get_cik("ZZZZ")
+
+
+def test_unknown_ticker_message_gives_a_next_step(tickers_in_cache):
+    with pytest.raises(sec_client.TickerNotFoundError, match="Check the spelling"):
         sec_client.get_cik("ZZZZ")
 
 

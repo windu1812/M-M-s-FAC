@@ -188,7 +188,10 @@ def build_financials(facts: dict, ticker: str, n_years: int = DEFAULT_YEARS) -> 
     """
     year_ends = find_fiscal_year_ends(facts)[:n_years]
     if not year_ends:
-        raise NoAnnualDataError(f"No annual 10-K data found for ticker '{ticker}'.")
+        raise NoAnnualDataError(
+            f"'{ticker}' has no annual 10-K report with XBRL data on SEC EDGAR "
+            "(foreign companies file a 20-F instead)."
+        )
 
     rows_by_item = {item: extract_item(facts, item, year_ends) for item in ITEMS}
     rows = [rows_by_item[item][i] for i in range(len(year_ends)) for item in ITEMS]
@@ -223,6 +226,8 @@ def get_financials(
         sec_client.TickerNotFoundError: the ticker is not in the SEC list.
         sec_client.SecUnavailableError: the data is not in the cache and the
             SEC cannot provide it (no internet, error status, bad answer).
+        sec_client.NoFinancialDataError: the SEC has no XBRL file for the company (HTTP 404).
+        sec_client.CacheFileError: the cached file of the company is damaged.
         NoAnnualDataError: the company has no annual 10-K data.
     """
     cik = sec_client.get_cik(ticker, refresh=refresh)

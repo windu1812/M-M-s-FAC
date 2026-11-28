@@ -12,6 +12,7 @@ import pytest
 import requests
 from streamlit.testing.v1 import AppTest
 
+from creditlens.data import financials as fin
 from creditlens.data import sec_client
 
 import synthetic_company as sc
@@ -32,8 +33,10 @@ def start() -> AppTest:
 
 
 def run(tickers: str, at: AppTest | None = None) -> AppTest:
+    """Type the tickers and click Run. The field is in a form: as in the browser, what is typed is
+    sent only when the form is submitted (Run or Enter), so both happen in the same run."""
     at = at or start()
-    at.text_input(key="tickers").input(tickers).run()
+    at.text_input(key="tickers").input(tickers)
     at.button(key="run").click().run()
     assert not at.exception, at.exception
     return at
@@ -197,8 +200,82 @@ def test_unknown_ticker_shows_an_error_and_the_other_company_is_shown(cache):
 def test_company_without_10k_shows_its_message(cache):
     at = run("FRGN, ALFA")
 
-    assert "FRGN: No annual 10-K data for FRGN." in at.error[0].value  # E10
+    assert "FRGN: No annual 10-K data." in at.error[0].value  # E10
+    assert "20-F" in at.error[0].value  # says why, without repeating the title
     assert len(table(at, "ratio_table")) == 9
+
+
+def test_several_failing_tickers_each_get_their_message_and_the_others_are_shown(cache):
+    at = run("ZZZZ, FRGN, ALFA")
+
+    assert len(at.error) == 2
+    assert "ZZZZ: Ticker not found." in at.error[0].value and "Check the spelling" in at.error[0].value
+    assert "FRGN: No annual 10-K data." in at.error[1].value
+    assert "Alfa Corp (SAMPLE DATA)" in page_text(at)
+
+
+def test_an_unexpected_problem_stops_only_its_own_ticker(cache, monkeypatch):
+    real_get_financials = fin.get_financials
+
+    def broken_for_beta(ticker, *args, **kwargs):
+        if ticker == "BETA":
+            raise KeyError("accn")  # for example a cached file with an unexpected shape
+        return real_get_financials(ticker, *args, **kwargs)
+
+    monkeypatch.setattr(fin, "get_financials", broken_for_beta)
+    at = run("ALFA, BETA")
+
+    assert len(at.error) == 1
+    assert "BETA: Unexpected problem." in at.error[0].value and "KeyError" in at.error[0].value
+    assert "Alfa Corp (SAMPLE DATA)" in page_text(at)  # V3
+
+
+def test_damaged_cache_file_says_which_file_to_delete(cache):
+    cik_file = sec_client.CACHE_DIR / f"CIK{sc.COMPANIES['BETA']['cik']:010d}.json"
+    cik_file.write_text('{"facts": ', encoding="utf-8")
+    at = run("ALFA, BETA")
+
+    assert "BETA: Damaged cache file." in at.error[0].value
+    assert "CIK0002222222.json" in at.error[0].value
+    assert "Alfa Corp (SAMPLE DATA)" in page_text(at)
+
+
+def test_the_same_error_for_several_tickers_is_shown_once(monkeypatch):
+    monkeypatch.delenv("SEC_USER_AGENT")
+    at = run("ALFA, BETA")  # empty cache: both would have to download
+
+    assert len(at.error) == 1
+    assert at.error[0].value.startswith("**ALFA, BETA: Settings missing.**")
+
+
+def test_progress_box_shows_an_error_when_no_company_could_be_loaded(cache):
+    at = run("ZZZZ, FRGN")
+
+    assert at.status[0].label == "Loaded 0 of 2 companies; 2 errors (see below)"
+    assert at.status[0].state == "error"  # not a green tick
+
+
+def test_progress_box_counts_the_companies_loaded(cache):
+    at = run("ALFA, ZZZZ")
+
+    assert at.status[0].label == "Loaded 1 of 2 companies; 1 error (see below)"
+    assert at.status[0].state == "complete"
+
+
+def test_results_say_which_tickers_they_belong_to(cache):
+    at = run("ALFA")
+    assert "Results for: **ALFA**" in page_text(at)
+
+    at.text_input(key="tickers").input("BETA").run()  # typed, but Run not clicked (nor Enter)
+
+    assert "Results for: **ALFA**" in page_text(at)  # the shown results still say what they are
+    assert "Alfa Corp (SAMPLE DATA)" in page_text(at)
+
+
+def test_input_error_is_shown_as_typed(cache):
+    at = run("AB$C, D$E")  # "$...$" would be read as a formula by Markdown
+
+    assert "AB\\$C" in at.error[0].value and "D\\$E" in at.error[0].value
 
 
 def test_sec_unreachable_without_cache_shows_a_message_for_that_ticker(cache, monkeypatch):
