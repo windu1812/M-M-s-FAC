@@ -46,6 +46,7 @@ DATA_ERRORS = tuple(ERROR_TITLES)
 ALERT_COLOURS = {"green": "green", "orange": "orange", "red": "red", "": "gray"}
 
 TABLE_ROW_HEIGHT = 35  # pixels, so the whole table shows without its own scroll bar
+SCROLLBAR_ROOM = 16  # pixels under the last row: the wide Notes column scrolls sideways (bar shown on Windows)
 STYLE_FILE = Path(__file__).with_name("style.css")  # the look of the page (fonts, cards, hidden Streamlit controls)
 EXAMPLE_TICKERS = "AAPL, MSFT, NKE"  # the demo companies, kept in the local cache
 # Section headings and their anchors; the links of the top bar (short words, so they fit on a phone) jump to them.
@@ -180,7 +181,8 @@ NOTE_CHAR_WIDTH = 7  # pixels per character of a note, about, at the table's fon
 def ratio_table_columns(table: pd.DataFrame) -> dict:
     """Column sizes of the ratio table: every fiscal-year cell readable, every note shown in full (the table then
     scrolls sideways inside its own box), and the ticker and metric kept in view while it scrolls."""
-    longest_note = int(table["Notes"].fillna("").str.len().max() or 0) if "Notes" in table else 0
+    lengths = table["Notes"].fillna("").str.len() if "Notes" in table else pd.Series(dtype=int)
+    longest_note = int(lengths.max()) if len(lengths) else 0  # an empty table has no longest note
     columns = {year: st.column_config.Column(width=YEAR_COLUMN_WIDTH) for year in table.columns
                if str(year).startswith("FY")}
     columns["Ticker"] = st.column_config.Column(pinned=True)
@@ -228,21 +230,20 @@ with st.container(key="hero", gap="xxsmall"):
 
 # The search panel, one row: the tickers, Run and the debt definition, aligned, so the cards fit on the first
 # screen. In a narrow window (phone) the columns go one under the other.
-search = st.container(key="search")
-input_column, debt_column = search.columns([1.1, 1], vertical_alignment="top")  # labels on the same line
-with input_column:
+# A row that wraps, not fixed columns: when the window is too narrow for both groups, the debt definition goes under
+# the field instead of squeezing it (fixed columns cut "Run" to "R..." at about 700 px). style.css sets the widths.
+search = st.container(key="search", horizontal=True, wrap=True, gap="medium", vertical_alignment="top")
+with search.container(key="search_tickers"):
     # A form, so that Enter in the field runs the screen like the Run button does.
     with st.form("ticker_form", border=False):
-        field_column, run_column = st.columns([5, 1], vertical_alignment="bottom")
-        with field_column:
+        with st.container(horizontal=True, vertical_alignment="bottom", gap="small", key="field_row"):
             st.text_input(
                 "Tickers (1 to 5 US companies, separated by commas)",
-                placeholder=EXAMPLE_TICKERS,
+                placeholder=f"e.g. {EXAMPLE_TICKERS}",  # "e.g.": the empty field must not look filled in
                 key="tickers",
             )
-        with run_column:
-            run_clicked = st.form_submit_button("Run", type="primary", key="run", width="stretch")
-with debt_column:  # outside the form: switching it redraws at once, without Run
+            run_clicked = st.form_submit_button("Run", type="primary", key="run", width="content")  # never cut
+with search.container(key="search_debt", width="content"):  # outside the form: redraws at once, without Run
     incl_leases = st.segmented_control(  # both choices visible, the same height as the ticker field
         "Debt definition",
         options=[False, True],
@@ -355,7 +356,7 @@ else:
             coloured_table(table, colours),
             hide_index=True,
             width="stretch",
-            height=TABLE_ROW_HEIGHT * (len(table) + 1) + 3,
+            height=TABLE_ROW_HEIGHT * (len(table) + 1) + 3 + SCROLLBAR_ROOM,
             column_order=[c for c in table.columns if c != "Company"],  # the cards give the names
             column_config=ratio_table_columns(table),
             key="ratio_table",

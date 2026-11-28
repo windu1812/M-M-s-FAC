@@ -119,7 +119,7 @@ def test_cards_show_the_ratios_changes_and_overall_alert(cache):
     assert "**8.00x**" in text and "+2.00x vs FY2025" in text
     assert ":orange-background[:orange[**Orange: 1 orange flag**]]" in text  # word and colour (AC7)
     # BETA: current ratio 0.80 and FCF -150 red; ND/EBITDA, coverage, margin not available (AC7)
-    assert ":gray-background[:gray[**N/A: 3 not available, 2 red flags, 1 green flag**]]" in text  # not rated
+    assert ":red-background[:red[**Red: 2 red flags, 3 not available**]]" in text  # red stays visible
     assert "Interest coverage (x): **not available**" in text
     assert "interest expense not reported" in text  # the reason, under the value
 
@@ -463,20 +463,23 @@ def test_cache_date_lists_only_the_companies_shown(cache):
 # --- Compact layout (design of 2026-11-28) -------------------------------------------------------------
 
 
-def test_inputs_are_on_one_row(cache):
-    """The ticker field, Run and the debt definition sit side by side, so the cards are visible without scrolling."""
+def test_inputs_are_on_one_row_that_wraps_instead_of_cutting_text(cache):
+    """The ticker field, Run and the debt definition sit side by side when there is room, so the cards are visible
+    without scrolling; in a narrower window the row wraps (the debt definition goes under the field) instead of
+    squeezing fixed columns, which cut "Run" to "R..." and the leases option at about 700 px (bug of 2026-11-28)."""
     at = start()
 
-    def blocks(node):  # every block of the page, at any depth (the row is inside the search panel)
+    def blocks(node):  # every block of the page, at any depth
         for child in getattr(node, "children", {}).values():
             yield child
             yield from blocks(child)
 
-    rows = [b for b in blocks(at.main) if [type(c).__name__ for c in getattr(b, "children", {}).values()]
-            == ["Column", "Column"]]  # st.columns: one row
-    row = rows[0]
-    keys = [w.key for w in row.get("text_input") + row.get("button") + row.get("button_group")]
+    search = [b for b in at.main.get("flex_container") if getattr(b.proto.flex_container, "wrap", False)
+              and b.get("text_input") and b.get("button_group")]
+    assert search, "the inputs are not in a row that wraps"
+    keys = [w.key for w in search[0].get("text_input") + search[0].get("button") + search[0].get("button_group")]
     assert keys == ["tickers", "run", "incl_leases"]
+    assert not [b for b in blocks(search[0]) if type(b).__name__ == "Column"]  # no fixed-ratio columns
 
 
 def test_results_line_and_cache_date_come_before_the_cards(cache):
@@ -559,8 +562,9 @@ def test_top_bar_links_to_the_sections_once_there_are_results(cache):
 
 
 def test_ratio_table_shows_every_note_and_year_cell_in_full(cache, monkeypatch):
-    """Fiscal-year columns fit "not available"; the Notes column is as wide as its longest note (the table then
-    scrolls sideways inside its box) and Ticker and Metric stay in view (review of PR #16, ux-reviewer #3)."""
+    """Checks the column configuration: fiscal-year columns fit "not available"; the Notes column is as wide as its
+    longest note (the table then scrolls sideways inside its box) and Ticker and Metric stay in view (review of PR #16,
+    ux-reviewer #3). Whether the notes really read well is the visual check V1 (screenshots and the student's look)."""
     import json
 
     from creditlens import display
@@ -578,5 +582,7 @@ def test_ratio_table_shows_every_note_and_year_cell_in_full(cache, monkeypatch):
 
     config = json.loads(at.dataframe[0].proto.columns)
     assert config["Notes"]["width"] >= 7 * len(long_note)  # about 7 pixels per character
-    assert all(config[year]["width"] >= 100 for year in config if year.startswith("FY"))
+    years = [column for column in config if column.startswith("FY")]
+    assert len(years) == 3  # ALFA, BETA: FY2024 to FY2026, each one configured
+    assert all(config[year]["width"] >= 100 for year in years)
     assert config["Ticker"]["pinned"] and config["Metric"]["pinned"]

@@ -343,13 +343,13 @@ def test_file_that_is_not_toml_gives_a_clear_error(tmp_path):
 # --- overall_alert -------------------------------------------------------------------
 
 
-def test_overall_alert_na_counts_not_available_and_not_meaningful(sample, thresholds):
+def test_overall_alert_red_counts_not_available_and_not_meaningful(sample, thresholds):
     flagged = flags.apply_flags(sample, thresholds)
     alert = flags.overall_alert(flagged, "GAPS")
     # ND/EBITDA, coverage, margin not available; D/E not meaningful; current ratio and FCF red
-    # 3 of the 6 not available: too many to rate the company (team decision 2026-11-28), but the counts stay.
-    assert alert.level == ""
-    assert alert.text == "N/A: 3 not available, 2 red flags, 1 not meaningful"
+    # 3 of the 6 not available, but a red flag is known: it stays "Red" (team decision 2026-11-28, review of PR #19).
+    assert alert.level == "red"
+    assert alert.text == "Red: 2 red flags, 3 not available, 1 not meaningful"
     assert (alert.red, alert.not_available, alert.not_meaningful) == (2, 3, 1)
 
 
@@ -434,6 +434,45 @@ def test_overall_alert_not_meaningful_does_not_count_as_not_available(thresholds
     alert = flags.overall_alert(flags.apply_flags(company_with(statuses), thresholds), "ONE")
     assert alert.level == "green"
     assert alert.text == "Green: 3 green flags, 2 not available, 1 not meaningful"
+
+
+def test_overall_alert_red_stays_red_with_three_not_available(thresholds):
+    """CALC16: a known red flag is never hidden behind "N/A" (current ratio 0.5 < 1.0 is red)."""
+    statuses = {metric: "not available" for metric in ["net_debt_to_ebitda", "interest_coverage", "ebitda_margin"]}
+    rows = company_with(statuses)
+    rows.loc[rows["metric"] == "current_ratio", "value"] = 0.5
+    alert = flags.overall_alert(flags.apply_flags(rows, thresholds), "ONE")
+    assert alert.level == "red"
+    assert alert.text == "Red: 1 red flag, 3 not available"
+
+
+def test_overall_alert_orange_with_three_not_available_is_na(thresholds):
+    """CALC16: D/E 1.5 is orange (> 1.0, <= 2.0); with 3 not available the company is not rated, the flags counted."""
+    statuses = {metric: "not available" for metric in ["net_debt_to_ebitda", "interest_coverage", "ebitda_margin"]}
+    rows = company_with(statuses)
+    rows.loc[rows["metric"] == "debt_to_equity", "value"] = 1.5
+    alert = flags.overall_alert(flags.apply_flags(rows, thresholds), "ONE")
+    assert alert.level == ""
+    assert alert.text == "N/A: 3 not available, 1 orange flag, 2 green flags"
+
+
+def test_overall_alert_orange_with_two_not_available_stays_orange(thresholds):
+    """CALC16: D/E 1.5 is orange; with only 2 not available the company is rated: "Orange"."""
+    rows = company_with({"interest_coverage": "not available", "ebitda_margin": "not available"})
+    rows.loc[rows["metric"] == "debt_to_equity", "value"] = 1.5
+    alert = flags.overall_alert(flags.apply_flags(rows, thresholds), "ONE")
+    assert alert.level == "orange"
+    assert alert.text == "Orange: 1 orange flag, 2 not available"
+
+
+def test_overall_alert_without_any_flag_and_few_not_available_is_na(thresholds):
+    """CALC16: nothing could be flagged (2 not available, 4 not meaningful): "N/A", as before it was "No flag"."""
+    statuses = {"net_debt_to_ebitda": "not available", "interest_coverage": "not available"}
+    statuses |= {metric: "not meaningful" for metric in
+                 ["debt_to_equity", "current_ratio", "ebitda_margin", "free_cash_flow"]}
+    alert = flags.overall_alert(flags.apply_flags(company_with(statuses), thresholds), "ONE")
+    assert alert.level == ""
+    assert alert.text == "N/A: 2 not available, 4 not meaningful"
 
 
 def test_overall_alert_unknown_ticker(sample, thresholds):

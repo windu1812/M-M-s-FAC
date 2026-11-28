@@ -43,6 +43,12 @@
         #ffffff;
 }
 [data-testid="stMain"], [data-testid="stAppViewContainer"] { scroll-behavior: smooth; }
+/* Anything scrolled to (a section link, a control reached with Tab) stops below the fixed bar, not behind it. */
+[data-testid="stMain"], [data-testid="stAppViewContainer"] { scroll-padding-top: 4.5rem; }
+
+/* Small grey texts (captions): Streamlit fades them to 60 %, which is below the 4.5:1 contrast for small text.
+   Full opacity with the muted grey gives about 7.6:1. */
+.stApp [data-testid="stCaptionContainer"] { opacity: 1; color: var(--cl-muted); }
 
 /* The page breathes on a large screen and keeps a margin on a small one; room at the top for the fixed bar. */
 [data-testid="stMainBlockContainer"] {
@@ -100,6 +106,7 @@
     color: var(--cl-blue);
 }
 .stApp h1 {
+    display: inline-block;  /* the gradient spans the word, so its blue end shows */
     font-size: clamp(2.4rem, 5vw, 3.5rem) !important;
     line-height: 1.05 !important;
     background: linear-gradient(90deg, #1d1d1f 0%, #1d1d1f 45%, #0071e3 100%);
@@ -118,6 +125,17 @@
     padding: 1.1rem 1.35rem 1.2rem;
     box-shadow: var(--cl-shadow);
 }
+
+/* The two groups of the search panel: the tickers take the free room (at least 20 rem), the debt definition its own
+   width; when both do not fit, the debt definition goes to the next line. Run keeps the width of its word. */
+.st-key-search > div:has(.st-key-search_tickers) { flex: 1 1 20rem !important; min-width: min(20rem, 100%) !important; }
+.st-key-search > div:has(.st-key-search_debt) { flex: 0 1 auto !important; max-width: 100%; }
+.st-key-field_row { flex-wrap: nowrap !important; }  /* Run always next to the field */
+.st-key-field_row > div:has([data-testid="stTextInput"]) { flex: 1 1 0 !important; min-width: 0; }
+.st-key-run button { padding-left: 1.6rem; padding-right: 1.6rem; white-space: nowrap; }
+/* A debt choice is never cut with "...": in a very narrow window its text goes on two lines. */
+.st-key-search [data-testid="stButtonGroup"] button:has(p) p { white-space: normal; overflow: visible; text-overflow: clip; }
+.st-key-search [data-testid="stButtonGroup"] button:has(p) { height: auto !important; min-height: 2.4rem; }
 
 /* 7. Buttons and fields: pill shapes, a clear blue focus ring, small lifts on hover. */
 .stApp [data-testid="stTextInputRootElement"] {
@@ -140,7 +158,7 @@
     box-shadow: 0 8px 22px rgba(0, 113, 227, 0.35);
 }
 .stApp button:active { transform: translateY(0) scale(0.98); }
-.st-key-search [data-testid="stButtonGroup"] button { border-radius: 999px !important; }
+.st-key-search [data-testid="stButtonGroup"] button:has(p) { border-radius: 999px !important; }
 .stApp button:focus-visible { outline: 2px solid var(--cl-blue) !important; outline-offset: 2px; }
 
 /* 8. Summary cards: grey tiles that share the row and wrap (at least 13 rem each), a coloured line on top for the
@@ -221,7 +239,7 @@
     to { opacity: 1; transform: translateY(0); }
 }
 [class*="st-key-card_"], .st-key-panel_charts, .st-key-panel_table, .st-key-search, .cl-feature {
-    animation: cl-rise 0.55s var(--cl-ease) both;
+    animation: cl-rise 0.55s var(--cl-ease) backwards;  /* "backwards": after rising, hover can lift the card */
 }
 .st-key-cards > div:nth-child(2) [class*="st-key-card_"] { animation-delay: 0.06s; }
 .st-key-cards > div:nth-child(3) [class*="st-key-card_"] { animation-delay: 0.12s; }
@@ -236,6 +254,8 @@
 /* 12. Small screens (phone): tighter panels, the bar keeps only the brand and the links. */
 @media (max-width: 640px) {
     .cl-tag { display: none; }
+    .st-key-search_debt, .st-key-search > div:has(.st-key-search_debt) { width: 100%; }
+    .st-key-search [data-testid="stButtonGroup"] button:has(p) { width: 100%; }  /* the two choices, same width */
     .cl-nav { padding: 0 0.75rem; }
     .cl-links a { padding: 0.35rem 0.55rem; }
     .st-key-search, .st-key-panel_charts, .st-key-panel_table { padding: 0.9rem 0.95rem 1rem; border-radius: 20px; }
@@ -248,7 +268,12 @@
 
 /* Once there are results, the hero gets small, so the summary cards stay on the first screen (1280 × 800). */
 .stApp:has(.st-key-cards) .cl-eyebrow { display: none; }
-.stApp:has(.st-key-cards) .stApp h1, .stApp:has(.st-key-cards) h1 { font-size: clamp(1.9rem, 3vw, 2.3rem) !important; }
+.stApp:has(.st-key-cards) h1 { font-size: clamp(1.9rem, 3vw, 2.3rem) !important; }
 .stApp:has(.st-key-cards) .st-key-hero { margin-bottom: 0.25rem; }
 .stApp:has(.st-key-cards) .st-key-hero [data-testid="stCaptionContainer"] p { font-size: 1rem; }
 .stApp:has(.st-key-cards) .st-key-search { padding: 0.8rem 1.35rem 0.9rem; }
+
+/* High-contrast mode (Windows): no gradient text, the title keeps the system text colour. */
+@media (forced-colors: active) {
+    .stApp h1 { -webkit-text-fill-color: currentColor; background: none; }
+}
