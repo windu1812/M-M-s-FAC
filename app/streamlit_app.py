@@ -193,8 +193,9 @@ else:
         # Table "Credit ratios, last 5 fiscal years" (visual 4).
         st.subheader("Credit ratios, last 5 fiscal years")
         st.caption(f"Debt definition: {display.DEBT_DEFINITIONS[incl_leases]}. Cell colours are the flags; "
-                   "\"Latest flag\" gives the flag of the latest fiscal year as a word. "
-                   "Fiscal year-end dates differ by company.")
+                   "\"Latest flag\" gives the flag of each company's latest fiscal year as a word, with the year "
+                   "when it is not the last column. Fiscal year-end dates differ by company. "
+                   + display.left_out_years_text(display_tbl))
         table, colours = display.ratio_table(display_tbl, incl_leases)
         st.dataframe(
             coloured_table(table, colours),

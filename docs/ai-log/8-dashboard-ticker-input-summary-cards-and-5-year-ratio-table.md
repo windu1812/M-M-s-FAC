@@ -54,3 +54,26 @@ Marc asked Claude to do the whole slice (decision log of `docs/architecture.md`,
 - François (step 6c): place the charts and the "Download Excel" button where `streamlit_app.py` says "Slice 6". They
   read `display_tbl`, `underlying`, `alerts` (`alerts[t].text` for `build_excel`) and `thresholds`.
 - The project's own browser check is not installed (about 150 MB): a team decision.
+
+## Session 2 (2026-11-28): review of PR #16 and a fix
+
+### What the AI did
+- Arthur reviewed PR #16 in place of François and ran three read-only reviewer agents (code, tests, interface)
+  on commit ab83d3e, in an isolated checkout of that commit (238 passed there).
+- The code reviewer found one major problem, reproduced with two SAMPLE DATA companies: when year ends differ
+  (September and December), the ratio table showed 6 fiscal-year columns, against AC5, and "Latest flag" could
+  sit next to a "no data" cell without saying its year.
+- At Arthur's request, wrote 4 tests first (seen failing: 6 columns), with the SAMPLE DATA companies SEPT and DECM
+  added to `tests/synthetic_company.py` and expected values worked out by hand (1,800 / 1,200 = 1.50x, green;
+  900 / 1,200 = 0.75x, red). Then changed `display.py`: `table_years` keeps the 5 most recent fiscal years,
+  `left_out_years_text` writes the sentence under the table title, and "Latest flag" names its year when it is
+  not the last column ("red (FY2025)"). The page shows that sentence. 242 passed.
+
+### The new functions, in simple words
+- `table_years(display)`: lists the fiscal years of the table (at most the 5 most recent) and the older years
+  left out.
+- `left_out_years_text(display)`: the sentence "Only the 5 most recent fiscal years are shown; left out: FY2021.",
+  or nothing when no year is left out.
+
+### What remains for people
+- Marc: read this fix (`display.py`, the tests and the caption of the table) before merging PR #16.

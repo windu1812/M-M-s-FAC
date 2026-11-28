@@ -126,6 +126,18 @@ def test_ratio_table_has_9_rows_per_company_with_units_and_flag_words(cache):
     assert ratios["Unit"].isin(["USD m", "x", "%"]).all()
 
 
+def test_ratio_table_shows_5_years_when_year_ends_differ_and_says_which_are_left_out(cache):
+    """AC5: SEPT (FY2022-FY2026) and DECM (FY2021-FY2025) cover 6 fiscal years; the table shows 5."""
+    at = run("SEPT, DECM")
+
+    ratios = table(at, "ratio_table")
+    year_columns = [c for c in ratios.columns if c.startswith("FY")]
+    assert year_columns == ["FY2022", "FY2023", "FY2024", "FY2025", "FY2026"]
+    decm = ratios[ratios["Ticker"] == "DECM"].set_index("Metric")
+    assert decm.loc["Current ratio", "Latest flag"] == "red (FY2025)"  # 900 / 1,200 = 0.75x < 1.0
+    assert "Only the 5 most recent fiscal years are shown; left out: FY2021." in page_text(at)
+
+
 def test_underlying_data_shows_tags_and_accession_numbers(cache):
     at = run("ALFA")
 

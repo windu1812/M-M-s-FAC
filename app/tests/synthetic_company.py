@@ -9,6 +9,9 @@ paper, independently of the app's code (AGENTS.md, rule 5).
 * BETA: a company that tags no D&A and no interest expense (like NKE), with a
   May year end and only 2 fiscal years.
 * FRGN: a foreign filer that files only 20-F reports (no 10-K).
+* SEPT and DECM: two companies whose year ends differ (September and December).
+  SEPT already has FY2026 (FY2022 to FY2026); DECM ends at FY2025 (FY2021 to
+  FY2025). Together they cover 6 fiscal years, but the ratio table shows 5.
 
 :func:`write_cache` saves them as the SEC files of the local cache, so the page
 reads them exactly as it would read real downloaded files.
@@ -69,6 +72,10 @@ BETA_FY2026 = {
 }
 BETA_FY2025 = {**BETA_FY2026, "current_assets": 2700}
 
+# SEPT: the example company in each of its 5 years (current ratio 1,800 / 1,200 = 1.50x, green).
+# DECM: the same, but current assets 900 (current ratio 900 / 1,200 = 0.75x, red).
+DECM_YEAR = {**EXAMPLE_FY2026, "current_assets": 900}
+
 COMPANIES = {
     "ALFA": {
         "cik": 1111111,
@@ -87,6 +94,18 @@ COMPANIES = {
         "name": "Foreign Filer plc (SAMPLE DATA)",
         "years": {"2026-12-31": {"revenue": 100, "total_assets": 200}},
         "form": "20-F",
+    },
+    "SEPT": {
+        "cik": 5555555,
+        "name": "September Year End Inc (SAMPLE DATA)",
+        "years": {f"{year}-09-30": EXAMPLE_FY2026 for year in range(2022, 2027)},
+        "form": "10-K",
+    },
+    "DECM": {
+        "cik": 6666666,
+        "name": "December Year End Inc (SAMPLE DATA)",
+        "years": {f"{year}-12-31": DECM_YEAR for year in range(2021, 2026)},
+        "form": "10-K",
     },
 }
 

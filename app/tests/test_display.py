@@ -292,6 +292,40 @@ def test_ratio_table_shows_no_filler_year(alfa_beta):
     assert beta_colours.loc["Current ratio", "FY2024"] == ""
 
 
+def test_ratio_table_keeps_the_5_most_recent_years_when_year_ends_differ():
+    """AC5: SEPT has FY2022-FY2026 and DECM FY2021-FY2025 (6 years together): the table shows FY2022-FY2026."""
+    _, _, table = pipeline("SEPT", "DECM")
+    wide, colours = display.ratio_table(table)
+    assert list(wide.columns) == ["Ticker", "Company", "Metric", "Unit", "FY2022", "FY2023", "FY2024", "FY2025",
+                                  "FY2026", "Latest flag", "Notes"]
+    assert wide.shape == colours.shape
+    sept = wide[wide["Ticker"] == "SEPT"].set_index("Metric")
+    decm = wide[wide["Ticker"] == "DECM"].set_index("Metric")
+    assert sept.loc["Current ratio", "FY2026"] == "1.50x"  # 1,800 / 1,200
+    assert decm.loc["Current ratio", "FY2025"] == "0.75x"  # 900 / 1,200
+    assert decm.loc["Current ratio", "FY2026"] == "no data"  # DECM's FY2026 is not filed yet
+
+
+def test_latest_flag_names_its_year_when_it_is_not_the_last_column():
+    _, _, table = pipeline("SEPT", "DECM")
+    wide, _ = display.ratio_table(table)
+    sept = wide[wide["Ticker"] == "SEPT"].set_index("Metric")
+    decm = wide[wide["Ticker"] == "DECM"].set_index("Metric")
+    assert sept.loc["Current ratio", "Latest flag"] == "green"  # 1.50x >= 1.5, FY2026 = the last column
+    assert decm.loc["Current ratio", "Latest flag"] == "red (FY2025)"  # 0.75x < 1.0, its latest year
+    assert decm.loc["EBITDA", "Latest flag"] == "no flag (FY2025)"
+
+
+def test_table_years_lists_the_shown_and_the_left_out_years(alfa_beta):
+    _, _, sept_decm = pipeline("SEPT", "DECM")
+    assert display.table_years(sept_decm) == ([2022, 2023, 2024, 2025, 2026], [2021])
+    assert display.left_out_years_text(sept_decm) == (
+        "Only the 5 most recent fiscal years are shown; left out: FY2021.")
+    _, _, alfa_beta_table = alfa_beta
+    assert display.table_years(alfa_beta_table) == ([2024, 2025, 2026], [])  # only real years (E11)
+    assert display.left_out_years_text(alfa_beta_table) == ""
+
+
 def test_ratio_table_switches_only_the_debt_based_rows(alfa_beta):
     _, _, table = alfa_beta
     financial, _ = display.ratio_table(table, incl_leases=False)

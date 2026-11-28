@@ -52,6 +52,9 @@ DEBT_BASED_METRICS = ["total_debt", "net_debt", "net_debt_to_ebitda", "debt_to_e
 
 MAX_TICKERS = 5
 
+# Fiscal-year columns of the table "Credit ratios, last 5 fiscal years" (AC5).
+TABLE_YEARS = 5
+
 # Decimals shown on screen, per unit (docs/product.md, "Rules").
 DECIMALS = {USD_M: 0, TIMES: 2, PERCENT: 1}
 
@@ -389,6 +392,33 @@ def _year_column(year: int) -> str:
     return f"FY{year}"
 
 
+def table_years(display: pd.DataFrame) -> tuple[list[int], list[int]]:
+    """The fiscal years of the ratio table, and the older years left out of it.
+
+    Year ends differ by company: a September company may already have FY2026
+    while a December one ends at FY2025, so together they cover 6 fiscal
+    years. The table keeps the 5 most recent fiscal years (AC5). Only real
+    years are listed, never a filler year (E11).
+
+    Returns:
+        ``(shown, left_out)``, both oldest first.
+    """
+    years = sorted(int(y) for y in display["fiscal_year"].unique())
+    if not years:
+        return [], []
+    first_shown = years[-1] - TABLE_YEARS + 1
+    return [y for y in years if y >= first_shown], [y for y in years if y < first_shown]
+
+
+def left_out_years_text(display: pd.DataFrame) -> str:
+    """The sentence under the table title when older years are left out, else ""."""
+    _, left_out = table_years(display)
+    if not left_out:
+        return ""
+    return (f"Only the {TABLE_YEARS} most recent fiscal years are shown; "
+            f"left out: {', '.join(_year_column(y) for y in left_out)}.")
+
+
 def ratio_table(display: pd.DataFrame, incl_leases: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     """The wide ratio table: one row per company and metric, one column per fiscal year.
 
@@ -396,17 +426,20 @@ def ratio_table(display: pd.DataFrame, incl_leases: bool = False) -> tuple[pd.Da
     the number ("1.42x") or its status ("not available"); the reasons are
     written in the "Notes" column with their years, so the cells stay short.
     A fiscal year that a company does not have shows "no data" (never a filler).
+    The columns are the 5 most recent fiscal years (:func:`table_years`).
+    "Latest flag" is the flag of the company's latest fiscal year; when that
+    year is not the last column, it is named: "red (FY2025)".
 
     Returns:
         ``(table, flags)``: the table to show, with the columns "Ticker",
-        "Company", "Metric", "Unit", one "FY<year>" column per fiscal year
-        (oldest first), "Latest flag" and "Notes"; and a table of the same
+        "Company", "Metric", "Unit", one "FY<year>" column per shown fiscal
+        year (oldest first), "Latest flag" and "Notes"; and a table of the same
         shape that holds the flag of each fiscal-year cell ("green", "orange",
         "red" or ""), used to colour the cells.
     """
     metrics = [selected_metric(m, incl_leases) for m in TABLE_METRICS]
     rows = display[display["metric"].isin(metrics)]
-    years = sorted(int(y) for y in rows["fiscal_year"].unique())
+    years, _ = table_years(rows)
     year_columns = [_year_column(y) for y in years]
 
     table_rows, flag_rows = [], []
@@ -434,8 +467,10 @@ def ratio_table(display: pd.DataFrame, incl_leases: bool = False) -> tuple[pd.Da
                 flags[column] = cell["flag"]
                 if note:
                     notes.setdefault(note, []).append(year)
-            latest_flag = metric_rows.loc[metric_rows.index.max(), "flag"]
-            row["Latest flag"] = latest_flag or NO_FLAG_TEXT
+            latest_year = int(metric_rows.index.max())
+            row["Latest flag"] = metric_rows.loc[latest_year, "flag"] or NO_FLAG_TEXT
+            if latest_year != years[-1]:  # this company has no figure in the last column yet
+                row["Latest flag"] += f" ({_year_column(latest_year)})"
             row["Notes"] = "; ".join(
                 f"{', '.join(_year_column(y) for y in note_years)}: {note}" for note, note_years in notes.items()
             )
