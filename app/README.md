@@ -56,6 +56,8 @@ The tests never call the internet and do not need `.env`.
 
 ## If something goes wrong
 
+- **"Damaged cache file" on the page:** a file in `app/cache/` was cut during a download. Delete the file the
+  message names and click Run again (the internet is needed to download it again).
 - **"Port 8501 is already in use":** another Streamlit app is still running. Stop it with `Ctrl+C` in its terminal,
   or start on another port: `.venv/bin/python -m streamlit run streamlit_app.py --server.port 8502`, then open
   http://localhost:8502.

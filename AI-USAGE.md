@@ -16,7 +16,7 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 - **What AI did:**
   - turned the product interview into the four documents of `docs/` (product, architecture, acceptance, plan);
   - wrote most of the code: SEC client and XBRL extraction, ratios, flags, display and page, charts, Excel export;
-  - wrote the tests first (375 offline tests at the end), with hand-worked expected values;
+  - wrote the tests first (379 offline tests at the end), with hand-worked expected values;
   - broke its own code on purpose to prove the tests catch mistakes (more than 50 deliberate bugs over the slices);
   - reviewed pull request #16 as reviewer agents (2 rounds), at Arthur's request, then fixed the findings;
   - wrote the team guide in French, and the root `README.md` and this file.
@@ -60,7 +60,8 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 | 2026-11-27 | Marc | Slice 5, dashboard (#8, PR #16): ticker checks, cards, coloured ratio table, "View underlying data", one error per ticker, light theme; SAMPLE DATA companies for page tests | 48 tests first; 10 deliberate bugs; page looked at in Chrome at 1280 px (4 fixes); François's charts run on the real table | Accepted |
 | 2026-11-28 | Arthur | Review of PR #16 with code, test and interface reviewer agents (2 rounds); fixed every finding: 5 fiscal-year columns when year ends differ, form and errors, clearer cards and table, Excel-style rounding shared by screen and flags, 83 more tests | Each fix's tests seen failing first; the reviewer's surviving deliberate bugs now make tests fail; the test reviewer redid the new expected values by hand | Accepted, except the findings listed as open in `docs/plan.md` (notes width, "Green" with missing ratios) |
 | 2026-11-28 | Arthur (with François's agreement) | Slice 6c: charts selector, the two charts and "Download Excel" in the real page; "Latest flag" words equal in Excel and on screen; a sentence when no company has a value for the chosen ratio | 9 + 5 page tests; 3 deliberate bugs; page run offline on the cached AAPL, MSFT, NKE files | Accepted; François to read the 6c lines before the merge |
-| 2026-11-28 | Arthur | Compact top of page (`design/compact-top`): inputs on one aligned row, debt definition as two buttons, cards visible without scrolling at 1280 × 800 | 3 new tests (375 passed); screenshots at 4 widths and the empty and error states | Pending Arthur's validation; not pushed |
+| 2026-11-28 | Arthur | Compact top of page (`design/compact-top`): inputs on one aligned row, debt definition as two buttons, cards visible without scrolling at 1280 × 800 | 3 new tests (375 passed); screenshots at 4 widths and the empty and error states | Validated by Arthur; merged with PR #18 |
+| 2026-11-28 | Arthur | Responsive, clean product-page look (`design/apple-style`): theme colours and pill buttons, system font, grey card tiles that wrap with the window, Deploy button, Streamlit menu (screencast recorder) and toolbars hidden, no Plotly toolbar | 4 new tests (379 passed); screenshots at 1440, 1280, 1000 and 390 px | Validated by Arthur; merged with PR #18 |
 | 2026-11-28 | Maiwenn | Slice 7 documents: root `README.md` (install, run, data, flags, known limitations) and this file, merged from `docs/ai-log/` (details: `docs/ai-log/docs-slice-7-readme-ai-usage.md`) | Every fact checked against `docs/product.md`, `plan.md`, `thresholds.toml`, the AI logs and the screen labels in the code; fresh-copy test (new Python 3.12 environment, install, 375 tests passed, app started on localhost); no secret found in the files | To be read by the team |
 
 ## AI mistakes and how they were caught
@@ -81,4 +82,4 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 | 5 | A 5-year calendar window instead of the "5 most recent fiscal years present" | Code and test reviewer agents, second round of PR #16 |
 | 5 | A broad `except Exception` on the page could hide a test that reached the internet | Code and test reviewer agents, second round; the test helper now refuses an "Unexpected problem" box |
 | 6 | Three display mistakes in the charts (minus sign cut off, label overlap, grey notes on a dark page) | Only seen on screenshots, not by the tests; a test now covers the first one |
-| Design | A blank first screenshot; a top padding that barely moved the title | Both seen by looking at the screenshots |
+| Design | A blank first screenshot; a top padding that barely moved the title; a style sheet added with `st.html` that Chrome ignored | All three seen by looking at the screenshots or the page in Chrome |

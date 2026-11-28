@@ -22,6 +22,9 @@ Status: agreed on 2026-11-20 (Arthur, for the team)
 ## Screens and visuals
 
 Look: one dashboard page with summary cards, charts and a table. Used on a phone: **no** (laptop only).
+Layout (agreed on 2026-11-28): the ticker field, Run and the debt definition (two buttons) on one aligned row;
+"Results for" and the cache date in small text under it; then the summary cards, visible without scrolling on a
+1280 × 800 laptop screen.
 Visual reference: a bank credit sheet. It is sober, with a white background and a dense table, and colour is used
 only for the flags.
 
@@ -112,7 +115,9 @@ Rules:
 - A missing input or a zero denominator gives "not available", with the reason.
 - A negative denominator (EBITDA ≤ 0 for Net debt / EBITDA, negative equity for Debt / equity) gives
   "not meaningful".
-- Display rounding: amounts 0 decimals, ratios 2 decimals, margin 1 decimal.
+- Display rounding: amounts 0 decimals, ratios 2 decimals, margin 1 decimal. Halves are rounded up, away from
+  zero, as Excel's ROUND does (2.005 → 2.01; −2.5 → −3). The flags compare the rounded value shown (decision of
+  2026-11-28).
 - No value is derived from other lines to fill a gap (decision of 2026-11-20). For example, a company that tags no
   D&A total gets "not available" for EBITDA, with the reason.
 - Revenue, total assets and net income are reconciled with the 10-K of AAPL, MSFT and NKE, with the 10-K page cited.

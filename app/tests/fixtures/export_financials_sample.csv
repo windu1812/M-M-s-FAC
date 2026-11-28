@@ -1,0 +1,9 @@
+# SAMPLE DATA - synthetic companies, NOT real filings. Used only by app/tests/test_export.py.
+# Format proposed for the "View underlying data" table of creditlens/display.py (slice 5, Marc): one row per
+# (ticker, fiscal year, item), amounts already in USD m and rounded to 0 decimals; empty "value" when not reported.
+ticker,company,fiscal_year,period_end,item,label,value,text,xbrl_tag,accession,status
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,revenue,Revenue,6000,"6,000 USD m",Revenues,0000000000-27-000001,ok
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,long_term_debt,Long-term debt (noncurrent),2000,"2,000 USD m",LongTermDebtNoncurrent,0000000000-27-000001,ok
+ALFA,Alpha Corp (SAMPLE DATA),2026,2026-12-31,short_term_borrowings,Short-term borrowings,,not reported,,,not available
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,revenue,Revenue,250000,"250,000 USD m",RevenueFromContractWithCustomerExcludingAssessedTax,0000000000-26-000002,ok
+BETA,Beta Inc (SAMPLE DATA),2026,2026-06-30,depreciation_amortization,D&A,,not reported,,,not available

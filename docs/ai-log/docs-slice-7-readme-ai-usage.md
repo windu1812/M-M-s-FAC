@@ -42,3 +42,10 @@ Claude (Claude Opus 5.5), following the `prepare-deploy` and `test-and-check` sk
   current rule; update its passage "The overall alert ignores missing ratios" if the rule changes.
 - **Arthur (slice 7):** a full review before hand-in (`review-changes`, all four reviewers), the git history search
   for secrets (`git log -p`), and the demo checklist of `prepare-deploy`.
+
+## 2026-11-28, merge conflict with `main` (by Arthur, with Claude)
+- PR #17 could not be merged after PRs #16, #15 and #18: `docs/plan.md` conflicted. Merged `main` into this branch and
+  kept both sides (slice statuses now "merged", every progress-log line in date order).
+- Brought the two documents up to date with what was merged after they were drafted: 379 tests (not 375); the page
+  now adapts to the window width (the "Laptop only" limitation is rewritten); the `design/apple-style` work and its
+  `st.html` mistake added to `AI-USAGE.md`. pytest: 379 passed.
