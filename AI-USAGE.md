@@ -4,7 +4,8 @@ How AI tools were used in this project. During the project, each branch kept its
 `docs/ai-log/<branch>.md`; this file gathers them for the hand-in (slice 7). The per-branch files stay in the
 repository with every detail.
 
-Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`. 
+Merged by Maiwenn with Claude on 2026-11-28 from `docs/ai-log/`, then completed by Arthur with the later design and fix
+branches of the same day. It covers the 14 files of `docs/ai-log/`.
 
 ## Summary
 
@@ -16,7 +17,7 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 - **What AI did:**
   - turned the product interview into the four documents of `docs/` (product, architecture, acceptance, plan);
   - wrote most of the code: SEC client and XBRL extraction, ratios, flags, display and page, charts, Excel export;
-  - wrote the tests first (389 offline tests at the end), with hand-worked expected values;
+  - wrote the tests first (390 offline tests at the end), with hand-worked expected values;
   - broke its own code on purpose to prove the tests catch mistakes (more than 50 deliberate bugs over the slices);
   - reviewed pull request #16 as reviewer agents (2 rounds), at Arthur's request, then fixed the findings;
   - wrote the team guide in French, and the root `README.md` and this file.
