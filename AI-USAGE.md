@@ -16,7 +16,7 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 - **What AI did:**
   - turned the product interview into the four documents of `docs/` (product, architecture, acceptance, plan);
   - wrote most of the code: SEC client and XBRL extraction, ratios, flags, display and page, charts, Excel export;
-  - wrote the tests first (389 offline tests at the end), with hand-worked expected values;
+  - wrote the tests first (395 offline tests at the end), with hand-worked expected values;
   - broke its own code on purpose to prove the tests catch mistakes (more than 50 deliberate bugs over the slices);
   - reviewed pull request #16 as reviewer agents (2 rounds), at Arthur's request, then fixed the findings;
   - wrote the team guide in French, and the root `README.md` and this file.
@@ -65,6 +65,7 @@ Merged by Maiwenn with Claude on 2026-11-28, from the 9 files of `docs/ai-log/`.
 | 2026-11-28 | Arthur (team decision) | Overall alert "N/A" when 3 or more of the 6 flagged ratios are not available (`fix/alert-na-many-missing`); the AI first checked the real data and asked, because "N/A as soon as one is missing" would have made all 3 demo companies N/A | 3 tests first, 3 deliberate bugs caught; NKE now "N/A: 3 not available, 3 green flags" | Accepted by Arthur; Maiwenn to read the change of her module |
 | 2026-11-28 | Arthur | Modern, responsive design (`design/modern-ui`): top bar, hero, panels, alert-colour lines, effects, empty-state tiles and example link; ratio table columns sized so notes are never cut. End-to-end run on the real cached AAPL, MSFT, NKE, offline | 3 new tests (385 passed), 4 deliberate bugs caught; screenshots at 4 widths; 2 layout mistakes seen on screenshots and fixed | Arthur's look pending |
 | 2026-11-28 | Arthur | Review of PR #19 with the code, test and interface reviewer agents, then fixes: search row that wraps (bug "R..." seen by Arthur), red never hidden behind "N/A" (team decision after the review), "N/A" cards say why, caption contrast, hover, high-contrast title, CALC16 extended | 389 passed; 4 new tests seen failing first, 3 deliberate bugs caught; screenshots at 5 widths | Accepted by Arthur; 4 minor findings open in `docs/plan.md` |
+| 2026-11-28 | Arthur (with François's agreement) | Chart look: rounded bars with the flag word, validated colour-blind-safe company colours, end labels, limits near the data, notes one per line; debt-choice pills no longer overlap | 6 tests first; colours checked with a validator; screenshots at 1280 and 390 px; 3 layout problems seen and fixed | Accepted by Arthur |
 | 2026-11-28 | Maiwenn | Slice 7 documents: root `README.md` (install, run, data, flags, known limitations) and this file, merged from `docs/ai-log/` (details: `docs/ai-log/docs-slice-7-readme-ai-usage.md`) | Every fact checked against `docs/product.md`, `plan.md`, `thresholds.toml`, the AI logs and the screen labels in the code; fresh-copy test (new Python 3.12 environment, install, 375 tests passed, app started on localhost); no secret found in the files | To be read by the team |
 
 ## AI mistakes and how they were caught

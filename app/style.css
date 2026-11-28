@@ -158,7 +158,10 @@
     box-shadow: 0 8px 22px rgba(0, 113, 227, 0.35);
 }
 .stApp button:active { transform: translateY(0) scale(0.98); }
-.st-key-search [data-testid="stButtonGroup"] button:has(p) { border-radius: 999px !important; }
+/* The debt choices are separate pills with a gap: Streamlit joins its buttons with a -1 px margin (made for square
+   corners sharing a border), which made the round pills overlap. */
+.st-key-search [data-testid="stButtonGroup"] button:has(p) { border-radius: 999px !important; margin: 0 !important; }
+.st-key-search [data-testid="stButtonGroup"] > div { column-gap: 0.5rem !important; }
 .stApp button:focus-visible { outline: 2px solid var(--cl-blue) !important; outline-offset: 2px; }
 
 /* 8. Summary cards: grey tiles that share the row and wrap (at least 13 rem each), a coloured line on top for the

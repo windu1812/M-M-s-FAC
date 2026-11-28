@@ -26,7 +26,9 @@ from __future__ import annotations
 import pandas as pd
 import plotly.graph_objects as go
 
-COMPARISON_TITLE = "How do the companies compare in the latest fiscal year?"
+# The words agreed in docs/product.md. A Plotly title never wraps, so the long one has its own line break (it fits on
+# a phone).
+COMPARISON_TITLE = "How do the companies compare<br>in the latest fiscal year?"
 TREND_TITLE = "How did this ratio change over 5 years?"
 
 INCL_LEASES = "_incl_leases"
@@ -43,19 +45,30 @@ CHART_RATIOS = [
 ]
 DEBT_BASED_RATIOS = ["net_debt_to_ebitda", "debt_to_equity"]
 
-# Colour is used only for the flags (docs/product.md, "Visual reference").
-FLAG_COLOURS = {"green": "#2e7d32", "orange": "#ef6c00", "red": "#c62828"}
-NO_FLAG_COLOUR = "#9e9e9e"
+# Colour carries meaning only for the flags (docs/product.md, "Visual reference"); the same tones as the cards
+# (app/style.css). A bar also writes its flag as a word, so colour is never the only sign.
+FLAG_COLOURS = {"green": "#1e8e3e", "orange": "#c25e00", "red": "#d70015"}
+NO_FLAG_COLOUR = "#8e8e93"
 
-# Company lines: neutral blues and greys, told apart by dash and marker too,
-# so they are never confused with a flag colour.
+# Company lines: one hue per company, in a fixed order, with no green, orange or red (reserved for the flags).
+# The order was checked with a colour-blindness validator (adjacent pairs: CVD ΔE ≥ 11.8, normal vision ≥ 23.8).
+# Dashes and markers differ too, and each line ends with its ticker, so a line is never told apart by colour alone.
 LINE_STYLES = [
-    ("#1f4e79", "solid", "circle"),
-    ("#5b9bd5", "dash", "square"),
-    ("#595959", "dot", "diamond"),
-    ("#8faadc", "dashdot", "triangle-up"),
-    ("#a5a5a5", "longdash", "x"),
+    ("#257de0", "solid", "circle"),
+    ("#ee7fac", "dash", "square"),
+    ("#6a4ce2", "dot", "diamond"),
+    ("#00b894", "dashdot", "triangle-up"),
+    ("#f2a600", "longdash", "x"),
 ]
+MAX_DIRECT_LABELS = 4  # with 5 companies the end labels would crowd: the legend names them
+
+# The look shared by both charts: the page's system font, quiet grid and axes, text in text colours.
+FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif'
+TEXT_COLOUR = "#1d1d1f"
+MUTED_COLOUR = "#6e6e73"
+GRID_COLOUR = "#eceef2"
+ZERO_LINE_COLOUR = "#8e8e93"
+BAR_CORNER_RADIUS = 6  # pixels: rounded bar ends
 
 # How a threshold is written on its reference line, per unit.
 THRESHOLD_FORMATS = {"x": "{:.1f}x", "%": "{:.1f} %", "USD m": "{:,.0f} USD m"}
@@ -107,33 +120,62 @@ def _add_sample_mark(fig: go.Figure) -> None:
     )
 
 
-def _add_note(fig: go.Figure, text: str, y: float) -> None:
+NOTE_LINE_HEIGHT = 15  # pixels per line of a note under the trend chart
+
+
+def _add_note(fig: go.Figure, text: str, below_plot: int) -> None:
+    """A grey note under the plot, ``below_plot`` pixels under its bottom edge (pixels, so it never overlaps the
+    axis title, whatever the height of the chart)."""
     fig.add_annotation(
         text=text,
-        xref="paper", yref="paper", x=0, y=y,
+        xref="paper", yref="paper", x=0, y=0, yshift=-below_plot,
         xanchor="left", yanchor="top", align="left", showarrow=False,
-        font={"size": 11},  # theme text colour, readable on a light or dark page
+        font={"size": 11, "color": MUTED_COLOUR},
     )
 
 
-def _add_thresholds(fig: go.Figure, metric: str, unit: str, thresholds: dict | None) -> None:
-    """Draw the green and orange limits of the metric as dashed vertical lines."""
+def _add_thresholds(fig: go.Figure, metric: str, unit: str, thresholds: dict | None, vertical: bool = True,
+                    within: tuple[float, float] | None = None) -> None:
+    """Draw the green and orange limits of the metric as dotted reference lines in their flag colour: vertical on
+    the bar chart (values along x), horizontal on the trend chart (values along y). The label is in text colour.
+    ``within`` (low, high): draw only the limits inside it, so a far limit does not flatten the data."""
     rule = (thresholds or {}).get(metric.removesuffix(INCL_LEASES))
     if rule is None:
         return
     sign = "≤" if rule["direction"] == "lower_is_better" else "≥"
     number_format = THRESHOLD_FORMATS.get(unit, "{}")
+    limits = [rule.get(c) for c in ("green", "orange") if rule.get(c) is not None]
     for colour in ("green", "orange"):
         limit = rule.get(colour)
-        if limit is None:
+        if limit is None or (within and not within[0] <= limit <= within[1]):
             continue
-        fig.add_vline(
-            x=limit,
-            line={"color": FLAG_COLOURS[colour], "dash": "dash", "width": 1.5},
-            annotation_text=f"{colour} {sign} {number_format.format(limit)}",
-            annotation_position="top",
-            annotation_font={"color": FLAG_COLOURS[colour], "size": 11},
-        )
+        # the two labels lean away from each other (the lower limit's to the left), so they never overlap
+        side = "left" if len(limits) == 2 and limit == min(limits) else "right"
+        line = {"color": FLAG_COLOURS[colour], "dash": "dot", "width": 1.5}
+        label = {"annotation_text": f"{colour} {sign} {number_format.format(limit)}",
+                 "annotation_font": {"color": MUTED_COLOUR, "size": 11}}
+        if vertical:
+            fig.add_vline(x=limit, line=line, annotation_position=f"top {side}", layer="below", **label)
+        else:
+            fig.add_hline(y=limit, line=line, annotation_position="top left", layer="below", **label)
+
+
+def _style(fig: go.Figure, title: str) -> None:
+    """The shared look: system font, title on the left, transparent background (the page's white panel shows),
+    light grid, axis text in muted grey, white tooltips."""
+    fig.update_layout(
+        title={"text": title, "x": 0, "xanchor": "left", "font": {"size": 16, "color": TEXT_COLOUR}},
+        template="plotly_white",
+        font={"family": FONT_FAMILY, "color": TEXT_COLOUR, "size": 12},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        hoverlabel={"bgcolor": "#ffffff", "bordercolor": "#d2d2d7",
+                    "font": {"family": FONT_FAMILY, "color": TEXT_COLOUR, "size": 12}},
+    )
+    axis = {"gridcolor": GRID_COLOUR, "linecolor": GRID_COLOUR, "tickfont": {"color": MUTED_COLOUR},
+            "title": {"font": {"color": MUTED_COLOUR, "size": 12}}, "zerolinecolor": ZERO_LINE_COLOUR}
+    fig.update_xaxes(**axis)
+    fig.update_yaxes(**axis)
 
 
 def comparison_bar_chart(
@@ -165,10 +207,14 @@ def comparison_bar_chart(
             orientation="h",
             x=[_number(v) for v in ordered["value"]],
             y=labels,
-            text=[r.text if pd.notna(r.value) else "" for r in ordered.itertuples()],
+            # the value and its flag as a word ("2.40x · orange"); no text for a missing value (its "n/a" note says why)
+            text=[(f"{r.text} · {r.flag}" if isinstance(r.flag, str) and r.flag else r.text)
+                  if pd.notna(r.value) else "" for r in ordered.itertuples()],
             textposition="outside",
+            textfont={"color": TEXT_COLOUR, "size": 12},
             cliponaxis=False,  # keep the minus sign of a negative value visible
-            marker={"color": [_flag_colour(f) for f in ordered["flag"]]},
+            marker={"color": [_flag_colour(f) for f in ordered["flag"]], "cornerradius": BAR_CORNER_RADIUS,
+                    "line": {"width": 0}},
             hovertext=[
                 f"{r.company}<br>FY{r.fiscal_year}, year ended {r.period_end}<br>{r.text}"
                 for r in ordered.itertuples()
@@ -181,22 +227,22 @@ def comparison_bar_chart(
         if pd.isna(r.value):
             fig.add_annotation(
                 x=0, y=label, text=f"n/a ({r.text})",
-                xanchor="left", showarrow=False,
+                xanchor="left", showarrow=False, font={"color": MUTED_COLOUR, "size": 11},
             )
 
     unit = rows.iloc[0]["unit"]
     _add_thresholds(fig, metric, unit, thresholds)
+    _style(fig, COMPARISON_TITLE)
     fig.update_layout(
-        title={"text": COMPARISON_TITLE},
-        template="plotly_white",
         height=180 + 60 * len(labels),
         margin={"l": 10, "r": 30, "t": 80, "b": 50},
+        bargap=0.45,  # slim bars, room to read
         xaxis={
             "title": {"text": _axis_title(rows)},
-            "zeroline": True, "zerolinewidth": 2, "zerolinecolor": "#404040",
+            "zeroline": True, "zerolinewidth": 1.5,
             "rangemode": "tozero",
         },
-        yaxis={"autorange": "reversed"},
+        yaxis={"autorange": "reversed", "showgrid": False, "tickfont": {"color": TEXT_COLOUR}},
     )
     if sample:
         _add_sample_mark(fig)
@@ -204,7 +250,7 @@ def comparison_bar_chart(
 
 
 def _missing_note(missing: list[tuple[str, int, str]]) -> str | None:
-    """One "n/a" note for the points not drawn: ticker, years and reason."""
+    """One "n/a" note for the points not drawn: one line per ticker and reason, with the years."""
     if not missing:
         return None
     groups: dict[tuple[str, str], list[int]] = {}
@@ -214,16 +260,19 @@ def _missing_note(missing: list[tuple[str, int, str]]) -> str | None:
         f"{ticker} {', '.join(f'FY{y}' for y in years)} ({reason})"
         for (ticker, reason), years in groups.items()
     ]
-    return "n/a (not drawn): " + "; ".join(parts)
+    return "n/a (not drawn):<br>" + "<br>".join(parts)
 
 
-def trend_line_chart(display: pd.DataFrame, metric: str, sample: bool = False) -> go.Figure:
+def trend_line_chart(display: pd.DataFrame, metric: str, sample: bool = False,
+                     thresholds: dict | None = None) -> go.Figure:
     """One line with markers per company, over its fiscal years.
 
     Args:
         display: the display table (see the module docstring).
         metric: the metric to show, for example ``"net_debt_to_ebitda"``.
         sample: True adds a "SAMPLE DATA" mark (synthetic data).
+        thresholds: the rules of flags.load_thresholds(); the green and orange
+            limits are drawn as horizontal reference lines. None draws no line.
 
     Each company covers only its own years, from its first to its last one in
     the table. A year without a value, or missing from the table, is a gap:
@@ -233,11 +282,15 @@ def trend_line_chart(display: pd.DataFrame, metric: str, sample: bool = False) -
     fig = go.Figure()
     missing: list[tuple[str, int, str]] = []
     year_ends = []
+    end_labels = []  # (ticker, year, value, text) of each company's last drawn point
+    all_years: list[int] = []
 
     for i, (ticker, company_rows) in enumerate(rows.groupby("ticker", sort=False)):
         by_year = company_rows.set_index("fiscal_year")
         years = list(range(int(by_year.index.min()), int(by_year.index.max()) + 1))
+        all_years += years
         values, hover = [], []
+        last_drawn = None
         for year in years:
             if year not in by_year.index:
                 values.append(None)
@@ -249,35 +302,57 @@ def trend_line_chart(display: pd.DataFrame, metric: str, sample: bool = False) -
             hover.append(f"{ticker} FY{year}, year ended {row['period_end']}: {row['text']}")
             if pd.isna(row["value"]):
                 missing.append((ticker, year, row["text"]))
+            else:
+                last_drawn = (ticker, year, float(row["value"]), row["text"])
         year_ends.append(f"{ticker} {by_year.loc[years[-1], 'period_end']}")
+        if last_drawn:
+            end_labels.append(last_drawn)
 
         colour, dash, symbol = LINE_STYLES[i % len(LINE_STYLES)]
         fig.add_trace(
             go.Scatter(
                 x=years, y=values, name=ticker,
                 mode="lines+markers", connectgaps=False,
-                line={"color": colour, "dash": dash, "width": 2},
-                marker={"symbol": symbol, "size": 9},
+                line={"color": colour, "dash": dash, "width": 2.5},
+                marker={"symbol": symbol, "size": 9, "line": {"color": "#ffffff", "width": 2}},  # white ring
                 hovertext=hover, hoverinfo="text",
             )
         )
 
-    _add_note(fig, f"Fiscal year-end dates differ by company (latest: {', '.join(year_ends)})", y=-0.18)
+    if len(fig.data) <= MAX_DIRECT_LABELS:  # each line ends with its ticker and value, in text colour
+        for ticker, year, value, text in end_labels:
+            fig.add_annotation(x=year, y=value, text=f"{ticker} {text}", xanchor="left", xshift=10,
+                               showarrow=False, font={"color": TEXT_COLOUR, "size": 12})
+
+    # Limits are drawn only near the data (from 0 or the lowest value to 1.25 x the highest): a far limit would
+    # stretch the axis and flatten the lines, hiding how the ratio moved. The bar chart always shows them.
+    drawn = rows["value"].dropna()
+    if not drawn.empty:
+        low, high = min(0.0, float(drawn.min())), float(drawn.max())
+        within = (low - 0.25 * abs(low), high + 0.25 * abs(high))
+        _add_thresholds(fig, metric, rows.iloc[0]["unit"], thresholds, vertical=False, within=within)
+
+    _add_note(fig, f"Fiscal year-end dates differ by company (latest: {', '.join(year_ends)})", below_plot=50)
     note = _missing_note(missing)
+    note_lines = note.count("<br>") + 1 if note else 0
     if note:
-        _add_note(fig, note, y=-0.26)
+        _add_note(fig, note, below_plot=50 + NOTE_LINE_HEIGHT + 6)
+    bottom = 50 + NOTE_LINE_HEIGHT * (1 + note_lines) + 16  # axis title, then the notes, each on its own line
+    _style(fig, TREND_TITLE)
     fig.update_layout(
-        title={"text": TREND_TITLE},
-        template="plotly_white",
-        height=460,
-        margin={"l": 10, "r": 30, "t": 80, "b": 120},
-        xaxis={"title": {"text": "Fiscal year"}, "dtick": 1, "tickformat": "d"},
+        height=100 + 300 + bottom,  # title and legend, a 300 px plot, the notes
+        margin={"l": 10, "r": 90, "t": 100, "b": bottom},  # top: a legend on two lines (phone) stays under the title  # room on the right for the end labels
+        # the real years only: without a fixed range Plotly widens the axis to fit the end labels (to FY2032 on a
+        # phone), which squeezed the lines
+        xaxis={"title": {"text": "Fiscal year"}, "dtick": 1, "tickformat": "d", "showgrid": False,
+               "range": [min(all_years) - 0.25, max(all_years) + 0.25]},
         yaxis={
             "title": {"text": _axis_title(rows)},
-            "zeroline": True, "zerolinewidth": 2, "zerolinecolor": "#404040",
+            "zeroline": True, "zerolinewidth": 1.5,
             "rangemode": "tozero",
         },
-        legend={"orientation": "h", "y": 1.02, "yanchor": "bottom", "x": 0},
+        legend={"orientation": "h", "y": 1.02, "yanchor": "bottom", "x": 0, "font": {"color": TEXT_COLOUR}},
+        hovermode="x unified",  # one tooltip per fiscal year with every company
     )
     if sample:
         _add_sample_mark(fig)

@@ -29,7 +29,11 @@ Layout (agreed on 2026-11-28): the ticker field, Run and the debt definition (tw
 sections, a hero title that gets small once there are results, the inputs in one white panel, cards with a line of
 their alert colour on top (the alert word is always written), the charts and the table in white panels, small
 rise-in and hover effects (off when the computer asks for less motion), and on the first visit three tiles saying
-what the screen gives and a "Try AAPL, MSFT, NKE" link.
+what the screen gives and a "Try AAPL, MSFT, NKE" link. Charts (2026-11-28, with François's agreement): the page's
+font, a quiet grid, slim bars with rounded ends in the flag colour and the flag word next to the value, company lines in
+one validated colour-blind-safe set with no green, orange or red (reserved for the flags), each line ending with its
+ticker and value (up to 4 companies), one tooltip per fiscal year, the flag limits on both charts (on the trend chart
+only when they are near the data, so the lines are not flattened), and every "n/a" reason on its own line.
 Visual reference: a bank credit sheet. It is sober, with a white background and a dense table; colour carries meaning
 only for the flags (the blue of the title, logo and buttons is decorative, one accent).
 

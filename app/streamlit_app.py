@@ -325,8 +325,8 @@ else:
         # One under the other, full width: side by side, the "n/a (not drawn)" notes under the charts were cut off.
         panel.plotly_chart(charts.comparison_bar_chart(display_tbl, chart_metric, thresholds),
                            width="stretch", config=PLOTLY_CONFIG, key="comparison_chart")
-        panel.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric), width="stretch", config=PLOTLY_CONFIG,
-                           key="trend_chart")
+        panel.plotly_chart(charts.trend_line_chart(display_tbl, chart_metric, thresholds=thresholds), width="stretch",
+                           config=PLOTLY_CONFIG, key="trend_chart")
 
         today = date.today().isoformat()
         tools.download_button(

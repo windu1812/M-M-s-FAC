@@ -101,7 +101,7 @@ def test_bars_are_sorted_with_na_last(display):
 def test_bars_show_the_screen_text_and_flag_colour(display):
     fig = charts.comparison_bar_chart(display, "net_debt_to_ebitda", THRESHOLDS)
     bar = fig.data[0]
-    assert list(bar.text) == ["-0.20x", "2.40x", ""]
+    assert list(bar.text) == ["-0.20x · green", "2.40x · orange", ""]  # the flag as a word too, never colour alone
     assert bar.cliponaxis is False  # seen on screen: the minus sign of -0.20x was cut off
     assert list(bar.marker.color) == [
         charts.FLAG_COLOURS["green"],
@@ -198,8 +198,8 @@ def test_line_axes_have_units_zero_line_and_year_end_note(display):
 def test_lines_list_missing_points_as_na_with_reason(display):
     fig = charts.trend_line_chart(display, "net_debt_to_ebitda")
     na = [t for t in annotation_texts(fig) if t.startswith("n/a")]
-    assert na == [
-        "n/a (not drawn): BETA FY2024, FY2025 (not available: D&A not reported); "
+    assert na == [  # one line per company and reason, so a long reason is never cut at the chart's edge
+        "n/a (not drawn):<br>BETA FY2024, FY2025 (not available: D&A not reported)<br>"
         "GAMA FY2026 (not meaningful: EBITDA ≤ 0)"
     ]
 
@@ -211,7 +211,7 @@ def test_ac8_interest_coverage_lines(display):
     assert list(lines["BETA"].y) == [None] * 5
     assert list(lines["GAMA"].y) == [4.20, 3.10, 2.50]
     na = [t for t in annotation_texts(fig) if t.startswith("n/a")]
-    assert na == ["n/a (not drawn): BETA FY2022, FY2023, FY2024, FY2025, FY2026 "
+    assert na == ["n/a (not drawn):<br>BETA FY2022, FY2023, FY2024, FY2025, FY2026 "
                   "(not available: interest expense not reported)"]
 
 
@@ -241,3 +241,49 @@ def test_empty_charts_get_a_sentence_saying_why(display):
 
 def test_no_sentence_when_one_company_has_a_value(display):
     assert charts.no_value_text(display, "interest_coverage") == ""  # ALFA has interest coverage
+
+
+# --- Look (design of 2026-11-28, with François's agreement): rounded bars, thresholds and labels on the lines ------
+
+
+def horizontal_lines(fig) -> list[float]:
+    return sorted(s.y0 for s in fig.layout.shapes if s.type == "line" and s.y0 == s.y1)
+
+
+def test_bars_have_rounded_ends(display):
+    fig = charts.comparison_bar_chart(display, "net_debt_to_ebitda", THRESHOLDS)
+    assert fig.data[0].marker.cornerradius == charts.BAR_CORNER_RADIUS
+
+
+def test_trend_chart_draws_the_flag_limits_when_given(display):
+    """Net debt / EBITDA: green up to 2.0x, orange up to 3.5x (thresholds.toml) -> two horizontal lines."""
+    with_limits = charts.trend_line_chart(display, "net_debt_to_ebitda", thresholds=THRESHOLDS)
+    without = charts.trend_line_chart(display, "net_debt_to_ebitda")
+    assert horizontal_lines(with_limits) == [2.0, 3.5]
+    assert horizontal_lines(without) == []
+
+
+def test_trend_chart_leaves_out_a_limit_far_above_the_data(display):
+    """BETA alone: values 0.50, 0.40, -0.20x. Limits 2.0x and 3.5x are above 1.25 x 0.50 = 0.625: drawing them would
+    stretch the axis and flatten the line, so they are left out (the bar chart keeps them)."""
+    beta = display[display["ticker"] == "BETA"]
+    fig = charts.trend_line_chart(beta, "net_debt_to_ebitda", thresholds=THRESHOLDS)
+    assert horizontal_lines(fig) == []
+
+
+def test_each_line_ends_with_its_ticker_and_last_value(display):
+    """Direct labels: each company's last drawn point, with the screen text (GAMA FY2026 is not meaningful, so its
+    last drawn point is FY2025, 3.60x)."""
+    fig = charts.trend_line_chart(display, "net_debt_to_ebitda")
+    labels = [t for t in annotation_texts(fig) if t.split(" ")[0] in {"ALFA", "BETA", "GAMA"}]
+    assert sorted(labels) == ["ALFA 2.40x", "BETA -0.20x", "GAMA 3.60x"]
+    assert list(fig.layout.xaxis.range) == [2021.75, 2026.25]  # the real years: the labels never widen the axis
+
+
+def test_company_lines_never_use_a_flag_colour(display):
+    """Colour carries meaning only for the flags (docs/product.md): a company line must not look like a flag."""
+    fig = charts.trend_line_chart(display, "net_debt_to_ebitda")
+    flag_colours = {c.lower() for c in charts.FLAG_COLOURS.values()}
+    assert all(trace.line.color.lower() not in flag_colours for trace in fig.data)
+    assert len({trace.line.color for trace in fig.data}) == len(fig.data)  # one colour per company
+
