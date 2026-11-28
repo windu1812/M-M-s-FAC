@@ -94,9 +94,9 @@ and click Run again. The same thresholds apply to both debt definitions.
 | Free cash flow | ≥ 0 | – | below 0 |
 
 A value is compared as it is shown on screen (2 decimals for ratios, 1 for the margin); a value exactly on a limit
-takes the better colour. The overall alert of a company is "N/A" if 3 or more of its 6 flagged ratios
-are "not available" (it cannot be rated); otherwise red if one ratio of its latest fiscal year is red, otherwise
-orange if one is orange, otherwise green. Its text counts the ratios that are "not available" or "not meaningful".
+takes the better colour. The overall alert of a company is red if one ratio of its latest fiscal year
+is red; otherwise "N/A" (not rated) if 3 or more of its 6 flagged ratios are "not available"; otherwise orange if one
+is orange, otherwise green. Its text counts the ratios that are "not available" or "not meaningful".
 
 ## Known limitations
 
@@ -116,7 +116,7 @@ orange if one is orange, otherwise green. Its text counts the ratios that are "n
   "not available".
 - **The overall alert is rated with up to 2 missing ratios.** With 1 or 2 of the 6 "not available", the alert uses
   the others (MSFT: "Orange: 1 orange flag, 2 not available"); read the counts in the alert text. With 3 or more,
-  the alert is "N/A" (NKE: "N/A: 3 not available, 3 green flags").
+  the alert is "N/A" (NKE: "N/A: 3 not available, 3 green flags"), unless a red flag is known: red is always shown.
 - **US companies with a 10-K only.** No quarterly data, no share prices, no forecasts.
 - **Fiscal years are not calendar years.** Year-end dates differ by company (Apple ends in September, Microsoft in
   June, Nike in May). When they differ, the table keeps the 5 most recent fiscal years and says which older years

@@ -119,7 +119,7 @@ def test_cards_show_the_ratios_changes_and_overall_alert(cache):
     assert "**8.00x**" in text and "+2.00x vs FY2025" in text
     assert ":orange-background[:orange[**Orange: 1 orange flag**]]" in text  # word and colour (AC7)
     # BETA: current ratio 0.80 and FCF -150 red; ND/EBITDA, coverage, margin not available (AC7)
-    assert ":gray-background[:gray[**N/A: 3 not available, 2 red flags, 1 green flag**]]" in text  # not rated
+    assert ":red-background[:red[**Red: 2 red flags, 3 not available**]]" in text  # red stays visible
     assert "Interest coverage (x): **not available**" in text
     assert "interest expense not reported" in text  # the reason, under the value
 
@@ -561,8 +561,9 @@ def test_top_bar_links_to_the_sections_once_there_are_results(cache):
 
 
 def test_ratio_table_shows_every_note_and_year_cell_in_full(cache, monkeypatch):
-    """Fiscal-year columns fit "not available"; the Notes column is as wide as its longest note (the table then
-    scrolls sideways inside its box) and Ticker and Metric stay in view (review of PR #16, ux-reviewer #3)."""
+    """Checks the column configuration: fiscal-year columns fit "not available"; the Notes column is as wide as its
+    longest note (the table then scrolls sideways inside its box) and Ticker and Metric stay in view (review of PR #16,
+    ux-reviewer #3). Whether the notes really read well is the visual check V1 (screenshots and the student's look)."""
     import json
 
     from creditlens import display
@@ -580,5 +581,7 @@ def test_ratio_table_shows_every_note_and_year_cell_in_full(cache, monkeypatch):
 
     config = json.loads(at.dataframe[0].proto.columns)
     assert config["Notes"]["width"] >= 7 * len(long_note)  # about 7 pixels per character
-    assert all(config[year]["width"] >= 100 for year in config if year.startswith("FY"))
+    years = [column for column in config if column.startswith("FY")]
+    assert len(years) == 3  # ALFA, BETA: FY2024 to FY2026, each one configured
+    assert all(config[year]["width"] >= 100 for year in years)
     assert config["Ticker"]["pinned"] and config["Metric"]["pinned"]

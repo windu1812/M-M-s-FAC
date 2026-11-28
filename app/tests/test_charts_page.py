@@ -177,6 +177,9 @@ def test_download_excel_button_gives_the_four_sheets_with_the_screen_values(cach
     assert alfa[header.index("Debt definition")] == "Financial debt only"
     card_texts = [m.value for m in at.markdown]
     assert any(alfa[header.index("Overall alert")] in text for text in card_texts)  # same alert as the card
+    beta = next(row for row in summary.iter_rows(min_row=export.HEADER_ROW + 1, values_only=True)
+                if row[0] == "BETA")
+    assert beta[header.index("Overall alert")] == "Red: 2 red flags, 3 not available"  # red kept with 3 missing
 
 
 def test_excel_summary_follows_the_debt_selector(cache, excel_files):

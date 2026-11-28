@@ -316,7 +316,7 @@ class Card:
     company: str
     fiscal_year: int
     period_end: str
-    alert_level: str  # "green", "orange", "red" or "" (no flag)
+    alert_level: str  # "green", "orange", "red" or "" for "N/A" (not rated)
     alert_text: str
     alert_note: str  # what the alert covers: the 6 flagged ratios, of which the card shows 3
     headlines: list[Headline]
@@ -393,7 +393,10 @@ def summary_card(display: pd.DataFrame, ticker: str, alert, incl_leases: bool = 
         period_end=first["period_end"],
         alert_level=alert.level,
         alert_text=alert.text,
-        alert_note=f"Alert on all {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} (see the table).",
+        alert_note=(f"Alert on all {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} (see the table)."
+                    if alert.level else  # "N/A": say why the company is not rated
+                    f"Not rated: too few of the {len(FLAGGED_RATIOS)} flagged ratios of FY{latest_year} have a value "
+                    "(see the table)."),
         headlines=headlines,
     )
 

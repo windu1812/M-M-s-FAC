@@ -268,8 +268,8 @@ def test_card_with_missing_ratios_counts_them(alfa_beta):
     _, flagged, table = alfa_beta
     card = display.summary_card(table, "BETA", flags.overall_alert(flagged, "BETA"))
     # red: current ratio 0.80 and FCF -150; not available: ND/EBITDA, coverage, margin.
-    # 3 of 6 not available: "N/A", the company is not rated (team decision 2026-11-28); the flags are still counted.
-    assert (card.alert_level, card.alert_text) == ("", "N/A: 3 not available, 2 red flags, 1 green flag")
+    # 3 of 6 not available, but a known red flag stays visible: "Red" (team decision 2026-11-28, review of PR #19).
+    assert (card.alert_level, card.alert_text) == ("red", "Red: 2 red flags, 3 not available")
     ndebitda, coverage, current = card.headlines
     assert ndebitda.text == "not available: D&A not reported" and ndebitda.flag == ""
     assert (ndebitda.shown, ndebitda.note, ndebitda.change) == ("not available", "D&A not reported", "")
@@ -446,6 +446,18 @@ def test_card_says_what_the_alert_covers(alfa_beta):
     card = display.summary_card(table, "BETA", flags.overall_alert(flagged, "BETA"))
     # the counts are over the 6 flagged ratios, the card shows 3 of them
     assert card.alert_note == "Alert on all 6 flagged ratios of FY2026 (see the table)."
+
+
+def test_na_card_says_why_it_is_not_rated(alfa_beta):
+    """An "N/A" card says why (review of PR #19): too few of the 6 flagged ratios have a value."""
+    import dataclasses
+
+    _, flagged, table = alfa_beta
+    not_rated = dataclasses.replace(flags.overall_alert(flagged, "BETA"), level="",
+                                    text="N/A: 3 not available, 1 green flag")
+    card = display.summary_card(table, "BETA", not_rated)
+    assert card.alert_note == ("Not rated: too few of the 6 flagged ratios of FY2026 have a value "
+                               "(see the table).")
 
 
 def test_card_change_says_better_or_worse_with_the_thresholds(alfa_beta):

@@ -22,9 +22,11 @@ Rules (docs/acceptance.md, agreed on 2026-11-20):
   ``net_debt_to_ebitda_incl_leases`` use the ``[net_debt_to_ebitda]`` section.
 * A row that is "not available" or "not meaningful" has no value, so no flag
   (empty text). Amounts (EBITDA, total debt, net debt) get no flag either.
-* Overall alert: red if at least one ratio is red, otherwise orange if at least
-  one is orange, otherwise green. "Not available" ratios do not count as red,
-  but the alert text says how many there are.
+* Overall alert: red if at least one ratio is red; otherwise "N/A" (not rated)
+  if 3 or more of the 6 flagged ratios are "not available"; otherwise orange if
+  at least one is orange, green if at least one is green, and "N/A" if no ratio
+  could be flagged. "Not available" ratios do not count as red, but the alert
+  text says how many there are (team decisions of 2026-11-28).
 """
 
 from __future__ import annotations
@@ -46,8 +48,9 @@ ORANGE = "orange"
 RED = "red"
 NO_FLAG = ""
 
-# Team decision of 2026-11-28: with 3 or more of the 6 flagged ratios "not available", a company cannot be rated,
-# and its overall alert is "N/A". With 1 or 2 not available, the alert is rated on the others as usual.
+# Team decisions of 2026-11-28: with 3 or more of the 6 flagged ratios "not available", a company cannot be rated,
+# and its overall alert is "N/A", unless a red flag is known (red is never hidden). With 1 or 2 not available, the
+# alert is rated on the others as usual.
 MAX_NOT_AVAILABLE_TO_RATE = 2
 NOT_RATED_TITLE = "N/A"
 
@@ -248,7 +251,7 @@ def apply_flags(ratios: pd.DataFrame, thresholds: dict | None = None) -> pd.Data
 class Alert:
     """The overall alert of one company, for its latest fiscal year."""
 
-    level: str  # "green", "orange", "red", or "" when no ratio has a flag
+    level: str  # "green", "orange", "red", or "" for "N/A" (not rated: 3+ not available, or no ratio flagged)
     text: str  # for example "Red: 2 red flags, 1 not available"
     fiscal_year: int
     green: int
@@ -295,10 +298,10 @@ def overall_alert(flagged: pd.DataFrame, ticker: str, incl_leases: bool = False)
     not_available = int((year["status"] == STATUS_NOT_AVAILABLE).sum())
     not_meaningful = int((year["status"] == STATUS_NOT_MEANINGFUL).sum())
 
-    if not_available > MAX_NOT_AVAILABLE_TO_RATE:
+    if counts[RED]:
+        level = RED  # a known red flag stays visible, whatever is missing
+    elif not_available > MAX_NOT_AVAILABLE_TO_RATE:
         level = NO_FLAG  # too many ratios missing to rate the company
-    elif counts[RED]:
-        level = RED
     elif counts[ORANGE]:
         level = ORANGE
     elif counts[GREEN]:
@@ -310,9 +313,9 @@ def overall_alert(flagged: pd.DataFrame, ticker: str, incl_leases: bool = False)
         parts = [_count(counts[level], f"{level} flag")]
         if not_available:
             parts.append(f"{not_available} not available")
-    else:  # "N/A: 3 not available, 3 green flags": the flags that exist are still counted
+    else:  # "N/A: 3 not available, 1 orange flag, 2 green flags": the flags that exist are still counted
         parts = [f"{not_available} not available"] if not_available else []
-        parts += [_count(counts[colour], f"{colour} flag") for colour in (RED, ORANGE, GREEN) if counts[colour]]
+        parts += [_count(counts[colour], f"{colour} flag") for colour in (ORANGE, GREEN) if counts[colour]]
     if not_meaningful:
         parts.append(f"{not_meaningful} not meaningful")
     title = level.capitalize() if level else NOT_RATED_TITLE

@@ -82,20 +82,32 @@ limit takes the better colour.
 | EBITDA margin | higher is better | ≥ 20 % | ≥ 10 % | < 10 % |
 | Free cash flow | higher is better | ≥ 0 | – | < 0 |
 
-**Overall alert (agreed on 2026-11-20; "N/A" rule added by the team on 2026-11-28):**
-- "N/A" if 3 or more of the 6 flagged ratios are "not available": the company cannot be rated (NKE);
-- otherwise red if at least one ratio is red;
+**Overall alert (agreed on 2026-11-20; "N/A" rule added by the team on 2026-11-28, red kept visible after the review
+of PR #19):**
+- red if at least one ratio is red (a known red flag is never hidden, whatever is missing);
+- otherwise "N/A" (not rated) if 3 or more of the 6 flagged ratios are "not available" (NKE);
 - otherwise orange if at least one is orange;
-- otherwise green.
+- otherwise green if at least one is green;
+- otherwise "N/A" (no ratio could be flagged; this was "No flag" before 2026-11-28).
 
 With 1 or 2 "not available", the alert is rated on the other ratios. "Not available" ratios do not count as red, but
 the card shows how many there are; an "N/A" alert still counts the flags that exist ("N/A: 3 not available, 3 green
-flags"). "Not meaningful" does not count as "not available".
+flags") and its card says "Not rated: too few of the 6 flagged ratios of FY… have a value". "Not meaningful" does not
+count as "not available".
 
-CALC16 (rule above, flags of ratios that are all green when available): 2 not available → "Green: 4 green flags,
-2 not available"; 3 not available → "N/A: 3 not available, 3 green flags"; 2 not available and 1 not meaningful →
-"Green: 3 green flags, 2 not available, 1 not meaningful" (tests: `test_overall_alert_one_or_two_not_available_keep_the_rule`,
-`test_overall_alert_three_not_available_is_na`, `test_overall_alert_not_meaningful_does_not_count_as_not_available`).
+CALC16 (rule above; the ratios of company ONE are green when available: ND/EBITDA 1.0 ≤ 2.0, D/E 0.5 ≤ 1.0,
+coverage 10.0 ≥ 6.0, current ratio 2.0 ≥ 1.5, margin 25.0 ≥ 20, FCF 100 ≥ 0):
+- 2 not available → "Green: 4 green flags, 2 not available";
+- 3 not available → 3 > 2, no red → "N/A: 3 not available, 3 green flags";
+- 2 not available and 1 not meaningful → "Green: 3 green flags, 2 not available, 1 not meaningful";
+- 3 not available and current ratio 0.5 (< 1.0, red) → red wins → "Red: 1 red flag, 3 not available";
+- 3 not available and D/E 1.5 (> 1.0 and ≤ 2.0, orange) → no red, 3 > 2 → "N/A: 3 not available, 1 orange flag,
+  2 green flags";
+- 2 not available and 4 not meaningful → nothing flagged → "N/A: 2 not available, 4 not meaningful".
+
+Tests: `test_overall_alert_one_or_two_not_available_keep_the_rule`, `test_overall_alert_three_not_available_is_na`,
+`test_overall_alert_not_meaningful_does_not_count_as_not_available`, `test_overall_alert_red_stays_red_with_three_not_available`,
+`test_overall_alert_orange_with_three_not_available_is_na`, `test_overall_alert_without_any_flag_and_few_not_available_is_na`.
 
 **Known answers of the SAMPLE DATA companies (dashboard tests).** Fictional companies of
 `app/tests/synthetic_company.py`, worked out by hand (USD m). The example company above is ALFA's FY2026; the other
@@ -105,7 +117,7 @@ inputs are given here. Thresholds as above.
 |---|---|---|---|
 | ALFA FY2025 | operating income 900, interest 150, cash 500, current assets 1,500 | EBITDA 900 + 200 = 1,100; net debt 2,300 − 500 = 1,800; 1,800 ÷ 1,100 = 1.636; including leases (3,000 − 500) ÷ 1,100 = 2.273; coverage 900 ÷ 150 = 6; current ratio 1,500 ÷ 1,200 = 1.25; margin 1,100 ÷ 6,000 = 18.33 % | 1.64x green; 2.27x orange; 6.00x green; 1.25x orange; 18.3 % orange |
 | ALFA FY2024 | as FY2025, D&A not reported | no EBITDA | EBITDA, Net debt / EBITDA and EBITDA margin "not available: D&A not reported", no colour |
-| BETA FY2026 (May year end) | revenue 4,000; operating income 500; no D&A, no interest expense; long-term debt 1,000, current portion 0; operating leases 300; cash 1,500; equity 3,000; current assets 2,400; current liabilities 3,000; operating cash flow 300; capex 450 | net debt 1,000 − 1,500 = −500; current ratio 2,400 ÷ 3,000 = 0.80; FCF 300 − 450 = −150; D/E including leases (1,000 + 300) ÷ 3,000 = 0.433; FY2025 current ratio 2,700 ÷ 3,000 = 0.90, so 0.80 − 0.90 = −0.10 | −500 USD m; 0.80x red; −150 USD m red; 0.43x green; "Red: 2 red flags, 3 not available"; "-0.10x vs FY2025 (worse)" |
+| BETA FY2026 (May year end) | revenue 4,000; operating income 500; no D&A, no interest expense; long-term debt 1,000, current portion 0; operating leases 300; cash 1,500; equity 3,000; current assets 2,400; current liabilities 3,000; operating cash flow 300; capex 450 | net debt 1,000 − 1,500 = −500; current ratio 2,400 ÷ 3,000 = 0.80; FCF 300 − 450 = −150; D/E including leases (1,000 + 300) ÷ 3,000 = 0.433; FY2025 current ratio 2,700 ÷ 3,000 = 0.90, so 0.80 − 0.90 = −0.10 | −500 USD m; 0.80x red; −150 USD m red; 0.43x green; 3 of 6 not available (ND/EBITDA, coverage, margin) but 2 red flags known, so red wins: "Red: 2 red flags, 3 not available"; "-0.10x vs FY2025 (worse)" |
 | SEPT FY2022–FY2026 (September) and DECM FY2021–FY2025 (December) | DECM: current assets 900 | SEPT current ratio 1,800 ÷ 1,200 = 1.50 each year; DECM 900 ÷ 1,200 = 0.75 | table FY2022–FY2026 (FY2021 left out); DECM FY2026 "no data"; "Latest flag" green / "red (FY2025)"; SEPT change "0.00x vs FY2025" |
 | GAMA FY2026 | revenue 4,000; operating income 800; interest 100; long-term debt 1,500, current portion 0; operating leases 1,000; cash 0; equity 2,000; current assets 1,500; current liabilities 1,000; operating cash flow 500; capex 200 | EBITDA 1,000; 1,500 ÷ 1,000 = 1.50; 1,500 ÷ 2,000 = 0.75; 800 ÷ 100 = 8; 1,500 ÷ 1,000 = 1.5; 1,000 ÷ 4,000 = 25 %; 500 − 200 = 300. Including leases: 2,500 ÷ 1,000 = 2.50; 2,500 ÷ 2,000 = 1.25 | "Green: 6 green flags"; including leases "Orange: 2 orange flags" (2.50x and 1.25x orange) |
 | NEGA FY2026 | operating income −300; equity −100 | EBITDA −300 + 200 = −100 ≤ 0; equity < 0; coverage −300 ÷ 125 = −2.4; margin −100 ÷ 6,000 = −1.67 %; current ratio 1.50; FCF 1,100 | "not meaningful: EBITDA ≤ 0", "not meaningful: negative equity"; −2.40x red; −1.7 % red; "Red: 2 red flags, 2 not meaningful" |
